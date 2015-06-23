@@ -1,14 +1,9 @@
-################################################################################
-# Copyright (C) 2012-2013 Leap Motion, Inc. All rights reserved.               #
-# Leap Motion proprietary and confidential. Not for distribution.              #
-# Use subject to the terms of the Leap Motion SDK Agreement available at       #
-# https://developer.leapmotion.com/sdk_agreement, or another agreement         #
-# between Leap Motion and you, your company or other organization.             #
-################################################################################
+'''Uses the circle gesture to control main volume. Clockwise rotation increases the volume whereas anti clockwise rotation decreases it'''
 
 import Leap, sys, thread, time,cv2,ctypes
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 import numpy as np
+from VolumeTest import volume
 
 
 class SampleListener(Leap.Listener):
@@ -24,7 +19,7 @@ class SampleListener(Leap.Listener):
         print "Connected"
 
        # Enable gestures
-       # controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE);
+        controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
        # controller.enable_gesture(Leap.Gesture.TYPE_KEY_TAP);
        # controller.enable_gesture(Leap.Gesture.TYPE_SCREEN_TAP);
        # controller.enable_gesture(Leap.Gesture.TYPE_SWIPE);
@@ -37,14 +32,22 @@ class SampleListener(Leap.Listener):
         print "Exited"
 
     def on_frame(self, controller):
-		frame = controller.frame()
-		fingers = frame.fingers
-		index_list = fingers.finger_type(Leap.Finger.TYPE_INDEX)
-		index = index_list[0]
-		if index.is_valid:
-			vector = index.direction
-			print '%.2f %.2f %.2f' % (vector.x, vector.y, vector.z)
-			
+        for gesture in controller.frame().gestures():
+            if gesture.type is Leap.Gesture.TYPE_CIRCLE and gesture.is_valid:
+                circle = Leap.CircleGesture(gesture)
+                print "Detecting Circle Gesture."
+                level = volume.GetMasterVolumeLevel()
+                if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
+                    print "Clockwise"
+                    if level + 0.06 < 0:
+                        print level
+                        volume.SetMasterVolumeLevel(level + 0.06,None)
+                else:
+                    print "Anti-Clockwise"
+                    if level - 0.06 > -64:
+                        print level
+                        volume.SetMasterVolumeLevel(level - 0.06,None)
+
  
                                         
 def main():
