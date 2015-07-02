@@ -8,23 +8,23 @@ from matplotlib import animation
 from collections import deque
 import math
 
-resolution = 50
+resolution = 255
 fig = plt.figure()
 plt.xlim([0,255])
-plt.ylim([0,40000])
+plt.ylim([0,100])
 line, = plt.plot([],[])
-line2, = plt.plot([],[])
+#line2, = plt.plot([],[])
 #left = np.ones((240,640),dtype=np.uint8)
 #im = plt.imshow(left,vmin = 0,vmax = 255,cmap = 'gray')
 Ydata = deque([0.00]*resolution, maxlen = resolution)
-Ydata2 = deque([0.00]*resolution, maxlen = resolution)
+#Ydata2 = deque([0.00]*resolution, maxlen = resolution)
 def init():
     #im.set_data(np.ones((240,640),dtype=np.uint8))
     line.set_data([np.arange(resolution)],[Ydata])
-    line2.set_data([np.arange(resolution)],[Ydata2])
+    #line2.set_data([np.arange(resolution)],[Ydata2])
     return  
     
-def animate(fn,controller,line):
+def hist(fn,controller,line):
     images = controller.images
     if images[1].is_valid:  
         image_buffer_ptr0 = images[0].data_pointer
@@ -44,30 +44,24 @@ def animate(fn,controller,line):
 def plot(fn,controller,line):
     frame = controller.frame()
     fingers = frame.fingers
-    hands = frame.hands()
-    if len(hands.fingers()) == 2:
-        index_list = fingers.finger_type(Leap.Finger.TYPE_INDEX)
-        pinky_list = fingers.finger_type(Leap.Finger.TYPE_PINKY)
-        index = index_list[0]
-        pinky = pinky_list[0]
-        if index.is_valid and pinky.is_valid:
-            indexPos = index.stabilized_tip_position
-            pinkyPos = pinky.stabilized_tip_position
-            indexDir = index.direction
-            pinkyDir = pinky.direction
-            Angle = indexDir.angle_to(pinkyDir)
-            Distance = indexPos.distance_to(pinkyPos)
-            print '%.2f %.2f' % (Angle,Distance)
-            Ydata.append(Angle)
-            Ydata2.append(Distance)
-            line.set_ydata(Ydata)
-            line2.set_ydata(Ydata2)
+    hands = frame.hands
+    index_list = fingers.finger_type(Leap.Finger.TYPE_INDEX)
+    thumb_list = fingers.finger_type(Leap.Finger.TYPE_THUMB)
+    index = index_list[0]
+    thumb = thumb_list[0]
+    if index.is_valid and thumb.is_valid:
+        indexPos = index.stabilized_tip_position
+        thumbPos = thumb.stabilized_tip_position
+        Distance = indexPos.distance_to(thumbPos)
+        print '%.2f' % (Distance)
+        Ydata.append(Distance)
+        line.set_ydata(Ydata)
     return    
                                     
 def main():
     controller = Leap.Controller()
-    controller.set_policy(Leap.Controller.POLICY_IMAGES)
-    anim = animation.FuncAnimation(fig,animate,fargs = (controller,line),init_func = init,interval = 1,blit = False)
+    #controller.set_policy(Leap.Controller.POLICY_IMAGES)
+    anim = animation.FuncAnimation(fig,plot,fargs = (controller,line),init_func = init,interval = 1,blit = False)
     plt.show()
 
 if __name__ == "__main__":

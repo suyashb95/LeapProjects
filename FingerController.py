@@ -8,28 +8,30 @@ import sys
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
 from VolumeTest import volume
 import win32api,win32con
+from Mouse import Mouse
  
  
-def volumeSetter(gesture):
-    circle = Leap.CircleGesture(gesture)
+def volumeSetter(circle):
     print "Detecting Circle Gesture."
-    level = volume.GetMasterVolumeLevel()
-    if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
-        print "Clockwise"
-        if level + 0.06 < 0:
-            print level
-            volume.SetMasterVolumeLevel(level + 0.06,None)
-    else:
-        print "Anti-Clockwise"
-        if level - 0.06 > -64:
-            print level
-            volume.SetMasterVolumeLevel(level - 0.06,None)
+    if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
+        level = volume.GetMasterVolumeLevel()
+        if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
+            print "Clockwise"
+            if level + 0.06 < 0:
+                print level
+                volume.SetMasterVolumeLevel(level + 0.06,None)
+        else:
+            print "Anti-Clockwise"
+            if level - 0.06 > -64:
+                print level
+                volume.SetMasterVolumeLevel(level - 0.06,None)
                 
 class FingerListener(Leap.Listener):
     
     def on_init(self, controller):
         print "Initialized"
         self.clicked = 0
+        self.mouse = Mouse()
         #controller.set_policy(Leap.Controller.POLICY_IMAGES)
         
     def on_connect(self, controller):
@@ -51,22 +53,6 @@ class FingerListener(Leap.Listener):
                         
     def on_frame(self, controller):
         frame = controller.frame()
-        hand = frame.hands.rightmost
-        if hand.is_valid:
-            x = 960 + int(7*hand.stabilized_palm_position.x)
-            y = -int(7*hand.stabilized_palm_position.y) + 1280 + 540
-            win32api.SetCursorPos((x,y))
-            
-            if hand.pinch_strength > 0.9 and self.clicked == 0:
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
-                self.clicked = 1
-            if hand.pinch_strength <= 0.9 and self.clicked == 1:
-                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
-                self.clicked = 0
-                
-            for gesture in frame.gestures():
-                if gesture.type is Leap.Gesture.TYPE_CIRCLE and gesture.is_valid:
-                    volumeSetter(gesture)
-                
+        self.mouse.Handler(frame)
                 
 
