@@ -8,20 +8,31 @@ from matplotlib import animation
 from collections import deque
 import math
 
-resolution = 255
+class RingBuffer():
+    def __init__(self, length):
+        self.data = np.zeros(length, dtype='f')
+
+    def append(self, x):
+        self.data = np.roll(self.data,-1)
+        self.data[-1] = x
+        
+resolution = 50
 fig = plt.figure()
-plt.xlim([0,255])
-plt.ylim([0,100])
+plt.xlim([0,resolution-1])
+plt.ylim([-2,2])
 line, = plt.plot([],[])
-#line2, = plt.plot([],[])
+line2, = plt.plot([],[])
 #left = np.ones((240,640),dtype=np.uint8)
 #im = plt.imshow(left,vmin = 0,vmax = 255,cmap = 'gray')
 Ydata = deque([0.00]*resolution, maxlen = resolution)
-#Ydata2 = deque([0.00]*resolution, maxlen = resolution)
+Ydata2 = deque([0.00]*50, maxlen = 50)
+#Ydata = RingBuffer(resolution)
+#Ydata2 = RingBuffer(resolution)
+
 def init():
     #im.set_data(np.ones((240,640),dtype=np.uint8))
     line.set_data([np.arange(resolution)],[Ydata])
-    #line2.set_data([np.arange(resolution)],[Ydata2])
+    line2.set_data([np.arange(50)],[Ydata2])
     return  
     
 def hist(fn,controller,line):
@@ -43,25 +54,32 @@ def hist(fn,controller,line):
 
 def plot(fn,controller,line):
     frame = controller.frame()
-    fingers = frame.fingers
-    hands = frame.hands
-    index_list = fingers.finger_type(Leap.Finger.TYPE_INDEX)
-    thumb_list = fingers.finger_type(Leap.Finger.TYPE_THUMB)
-    index = index_list[0]
-    thumb = thumb_list[0]
-    if index.is_valid and thumb.is_valid:
-        indexPos = index.stabilized_tip_position
-        thumbPos = thumb.stabilized_tip_position
-        Distance = indexPos.distance_to(thumbPos)
-        print '%.2f' % (Distance)
-        Ydata.append(Distance)
-        line.set_ydata(Ydata)
-    return    
+    if fn == 0:
+        lastframe = controller.frame()
+    global lastframe
+    oldhand = lastframe.hands.rightmost
+    hand = frame.hands.rightmost
+    if hand:
+        fingers = hand.fingers
+        thumb = fingers.finger_type(Leap.Finger.TYPE_THUMB)[0]
+        #pinky = fingers.finger_type(Leap.Finger.TYPE_PINKY)[0]
+        #index = fingers.finger_type(Leap.Finger.TYPE_INDEX)[0]
+        if thumb.is_valid:
+            #indexPos = index.stabilized_tip_position
+            #thumbDir = thumb.direction
+            #indexDir = index.direction
+            #Distance1 = indexPos.angle_to(hand.direction)
+            #Distance2 = indexDir.angle_to(hand.palm_normal)
+            Ydata.append(hand.pinch_strength)
+            Ydata2.append(oldhand.pinch_strength)
+            line.set_ydata(Ydata)
+            line2.set_ydata(Ydata)
+        return    
                                     
 def main():
     controller = Leap.Controller()
     #controller.set_policy(Leap.Controller.POLICY_IMAGES)
-    anim = animation.FuncAnimation(fig,plot,fargs = (controller,line),init_func = init,interval = 1,blit = False)
+    anim = animation.FuncAnimation(fig,plot,fargs = (controller,line),init_func = init,interval = 1,blit = False,frames = 300)
     plt.show()
 
 if __name__ == "__main__":

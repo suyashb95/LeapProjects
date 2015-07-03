@@ -31,23 +31,17 @@ class SampleListener(Leap.Listener):
         print "Exited"
 
     def on_frame(self, controller):
-		cur_frame = controller.frame()
-		prev_frame = controller.frame(5)
-		hand = cur_frame.hands[0]
-		print hand.rotation_probability(prev_frame)		
+        frame = controller.frame()
+        interactionBox = frame.interaction_box
+        hand = frame.hands.rightmost
+        print interactionBox.height, interactionBox.width, interactionBox.depth,interactionBox.center
 
  
                                         
 def main():
-    #listener = SampleListener()
-    #controller.add_listener(listener)
+    listener = SampleListener()
     controller = Leap.Controller()
-    while(1):
-        cur_frame = controller.frame()
-        prev_frame = controller.frame(5)
-        hand = cur_frame.hands[0]
-        print hand.rotation_probability(prev_frame)	
-        sys.stdout.flush()	
+    controller.add_listener(listener)
     print "Press Enter to quit..."
     try:
         sys.stdin.readline()

@@ -31,7 +31,7 @@ class FingerListener(Leap.Listener):
     def on_init(self, controller):
         print "Initialized"
         self.clicked = 0
-        self.mouse = Mouse()
+        self.mouse = Mouse(controller.frame().interaction_box)
         #controller.set_policy(Leap.Controller.POLICY_IMAGES)
         
     def on_connect(self, controller):
