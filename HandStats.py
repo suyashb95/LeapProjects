@@ -34,7 +34,7 @@ class SampleListener(Leap.Listener):
         frame = controller.frame()
         interactionBox = frame.interaction_box
         hand = frame.hands.rightmost
-        print interactionBox.height, interactionBox.width, interactionBox.depth,interactionBox.center
+        print hand.palm_position
 
  
                                         
