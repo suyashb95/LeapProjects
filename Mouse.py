@@ -87,7 +87,6 @@ class Mouse():
 			y = -int(8.1*(hand.stabilized_palm_position.y - 250)) + self.center['y']
 			if grab != 0:
 				if 20 <= x <= 1900 and 20 <= y <= 1060:
-					win32api.SetCursorPos((x,y))
 					win_handle = win32gui.GetForegroundWindow()
 					win_size = win32gui.GetWindowRect(win_handle)
 					win32gui.SetWindowPos(win_handle,win32con.HWND_TOP,

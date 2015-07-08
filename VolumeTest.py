@@ -128,10 +128,10 @@ enumerator = comtypes.CoCreateInstance(
     comtypes.CLSCTX_INPROC_SERVER
 )
 
-print enumerator
+#print enumerator
 endpoint = enumerator.GetDefaultAudioEndpoint( 0, 1 )
-print endpoint
+#print endpoint
 volume = endpoint.Activate( IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None )
-print volume
-print volume.GetMasterVolumeLevel()
-print volume.GetVolumeRange()
+#print volume
+#print volume.GetMasterVolumeLevel()
+#print volume.GetVolumeRange()
