@@ -32,9 +32,10 @@ class SampleListener(Leap.Listener):
 
     def on_frame(self, controller):
         frame = controller.frame()
+        print frame.current_frames_per_second
         interactionBox = frame.interaction_box
         hand = frame.hands.rightmost
-        print hand.palm_position
+        #print hand.palm_position
 
  
                                         
