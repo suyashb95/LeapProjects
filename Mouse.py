@@ -23,6 +23,7 @@ class Mouse():
 		self.clicked = 0
 		self.clickPoint = None
 		self.zoomCoord = None
+		self.cursor_level = None
 		
 	def Handler(self,frame):
 		hands = frame.hands
@@ -45,6 +46,7 @@ class Mouse():
 						self.mode = 1	
 						if self.clickPoint is None:
 							self.clickPoint = Hand.palm_position.z	
+							self.cursor_level = self.hideCursor()
 			elif Hand.grab_strength > 0.9 and Hand.palm_normal.x < -0.6:
 				self.mode = 2
 			else:
@@ -55,9 +57,13 @@ class Mouse():
 				self.clickPoint = None
 				self.zoomCoord = None
 				self.Pointer(Hand,0)
+				if self.cursor_level is not None:
+					win32api.ShowCursor(self.cursor_level)
 			elif self.mode == 1:
 				print "Scroller"
 				self.Scroller(Hand)
+				if self.cursor_level is not None:
+					win32api.ShowCursor(self.cursor_level)
 			elif self.mode == 2:
 				self.clickPoint = None
 				self.zoomCoord = None
@@ -147,6 +153,11 @@ class Mouse():
 		while win32api.GetAsyncKeyState(key_code):
 			win32api.keybd_event(key_code,0,win32con.KEYEVENTF_KEYUP,0)
 		
+	def hideCursor(self):
+		value = win32api.ShowCursor(False) + 1
+		while win32api.ShowCursor(False) > -1:
+			win32api.ShowCursor(False)
+		return value
 
 
 			
