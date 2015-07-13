@@ -15,6 +15,7 @@ A python project using the Leap Motion API for image processing and gesture cont
 * Moving the hand in a circle of radius > 50 mm in clockwise/anticlockwise direction increases/decreases the master volume. 
 * HandStats.py uses matplotlib to plot characteristics like image histogram or hand coordinates.(Needs Numpy and matplotlib)
 * HandDetect.py uses the Leap Image API and OpenCV to detect hands by accessing images from the controller.(Needs OpenCV)
+* LeapMouse.py works only with Windows.
 
 ###Dependencies
 * Pywin32 - Win32 API for Python
