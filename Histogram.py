@@ -19,20 +19,20 @@ class RingBuffer():
 resolution = 50
 fig = plt.figure()
 plt.xlim([0,resolution-1])
-plt.ylim([-2,2])
+plt.ylim([0,30000])
 line, = plt.plot([],[])
-line2, = plt.plot([],[])
+#line2, = plt.plot([],[])
 #left = np.ones((240,640),dtype=np.uint8)
 #im = plt.imshow(left,vmin = 0,vmax = 255,cmap = 'gray')
-Ydata = deque([0.00]*resolution, maxlen = resolution)
-Ydata2 = deque([0.00]*50, maxlen = 50)
+Ydata = deque([0.00]*256, maxlen = 256)
+#Ydata2 = deque([0.00]*50, maxlen = 50)
 #Ydata = RingBuffer(resolution)
 #Ydata2 = RingBuffer(resolution)
 
 def init():
     #im.set_data(np.ones((240,640),dtype=np.uint8))
-    line.set_data([np.arange(resolution)],[Ydata])
-    line2.set_data([np.arange(50)],[Ydata2])
+    line.set_data([np.arange(256)],[Ydata])
+    #line2.set_data([np.arange(50)],[Ydata2])
     return  
     
 def hist(fn,controller,line):
@@ -79,7 +79,7 @@ def plot(fn,controller,line):
 def main():
     controller = Leap.Controller()
     #controller.set_policy(Leap.Controller.POLICY_IMAGES)
-    anim = animation.FuncAnimation(fig,plot,fargs = (controller,line),init_func = init,interval = 1,blit = False,frames = 300)
+    anim = animation.FuncAnimation(fig,hist,fargs = (controller,line),init_func = init,interval = 1,blit = False,frames = 300)
     plt.show()
 
 if __name__ == "__main__":

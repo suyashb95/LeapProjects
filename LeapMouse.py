@@ -1,4 +1,4 @@
-from FingerController import FingerListener
+from Controllers.FingerController import FingerListener
 import Leap
 import sys
 

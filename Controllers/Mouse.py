@@ -1,14 +1,5 @@
-import Leap
+from Windows import Leap
 import win32api,win32con,win32gui
-
-'''
-TO DO:
-	Use interaction box to fix movement boundaries. //Done
-	Make Pointer mode and Scroller mode more accurate.(Use finger directions) //Done 
-	Distinguish accurate clicks.(Index and Pinky, use pinch_strength, and angle to, possibly derivative.)
-	Use Kalman filters to smoothen movement.
-	Miscellaneous gestures. //Added Moving and Zooming
-'''
 	
 
 class Mouse():
@@ -48,27 +39,27 @@ class Mouse():
 							if self.clickPoint is None:
 								self.clickPoint = Hand.palm_position.z	
 								self.cursor_level = self.hideCursor()
-				elif Hand.grab_strength > 0.9 and Hand.palm_normal.x < -0.6:
+				elif Hand.grab_strength > 0.93 and Hand.palm_normal.x < -0.6:
 					self.mode = 2
 				else:
 					pass
 					
 				if self.mode == 0:
-					print "Pointer"
+					#print "Pointer"
 					self.clickPoint = None
 					self.zoomCoord = None
 					self.Pointer(Hand,0)
 					if self.cursor_level is not None:
 						win32api.ShowCursor(self.cursor_level)
 				elif self.mode == 1:
-					print "Scroller"
+					#print "Scroller"
 					self.Scroller(Hand)
 					if self.cursor_level is not None:
 						win32api.ShowCursor(self.cursor_level)
 				elif self.mode == 2:
 					self.clickPoint = None
 					self.zoomCoord = None
-					print "Grabber"
+					#print "Grabber"
 					self.Pointer(Hand,1)
 				else:
 					pass
@@ -78,7 +69,7 @@ class Mouse():
 		handPos = hand.palm_position
 		pitch = handDir.pitch
 		x,y = win32api.GetCursorPos()
-		print win32api.GetAsyncKeyState(win32con.VK_LCONTROL)
+		#print win32api.GetAsyncKeyState(win32con.VK_LCONTROL)
 		if pitch > 0.16:
 			win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, 10, 0)
 			return 
@@ -89,7 +80,7 @@ class Mouse():
 				
 	def Pointer(self,hand,grab):
 		handPos = hand.stabilized_palm_position
-		if -300 <= handPos.x <= 300 and 100 <= handPos.y <= 500:  
+		if -200 <= handPos.x <= 200 and 50 <= handPos.y <= 400:  
 			x = int(9.6*hand.stabilized_palm_position.x) + self.center['x']
 			y = -int(8.1*(hand.stabilized_palm_position.y - 250)) + self.center['y']
 			if grab != 0:
@@ -100,11 +91,11 @@ class Mouse():
 										x,y,
 										win_size[2]- win_size[0],
 										win_size[3] - win_size[1],
-										win32con.SWP_NOSIZE)
+										win32con.SWP_NOSIZE | win32con.SWP_NOOWNERZORDER)
 					return 
 			else:
 				win32api.SetCursorPos((x,y))
-				if hand.pinch_strength > 0.95 and self.clicked == 0:
+				if hand.pinch_strength > 0.97 and self.clicked == 0:
 					win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
 					self.clicked = 1
 				if hand.pinch_strength <= 0.95 and self.clicked == 1:
@@ -114,7 +105,7 @@ class Mouse():
 					
 	def zoomDetect(self,z):
 		if abs(z - self.clickPoint) > 30.0:
-			print "Zoom"
+			#print "Zoom"
 			if self.zoomCoord is None:
 				self.zoomCoord = z
 				if (z - self.clickPoint) > 0.0:
@@ -123,11 +114,11 @@ class Mouse():
 					self.Zoom(1)
 			elif self.zoomCoord - z > 10.0:
 				self.Zoom(-1)
-				print "In"
+				#print "In"
 				self.zoomCoord = z
 			elif self.zoomCoord - z < -10.0:
 				self.Zoom(1)
-				print "Out"
+				#print "Out"
 				self.zoomCoord = z	
 				
 	def Zoom(self,zoomFactor):
