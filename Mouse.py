@@ -32,45 +32,46 @@ class Mouse():
 			for item in hands:
 				if item.is_right:
 					Hand = item
-			fingers = Hand.fingers
-			extended_fingers = fingers.extended()
-			self.mode = 0
-			Ring = fingers.finger_type(3)[0]
-			Pinky = fingers.finger_type(4)[0]
-			if 2<= len(extended_fingers) <=3:
-				if Ring not in extended_fingers and Pinky not in extended_fingers:
-					Middle = fingers.finger_type(2)[0]
-					pinky_to_mid = Pinky.direction.angle_to(Middle.direction)
-					pinky_to_palm = Pinky.direction.angle_to(Hand.direction)
-					if 0.1 <= pinky_to_palm <= 3.5 and 0.1 <= pinky_to_mid <= 2.5:
-						self.mode = 1	
-						if self.clickPoint is None:
-							self.clickPoint = Hand.palm_position.z	
-							self.cursor_level = self.hideCursor()
-			elif Hand.grab_strength > 0.9 and Hand.palm_normal.x < -0.6:
-				self.mode = 2
-			else:
-				pass
-				
-			if self.mode == 0:
-				print "Pointer"
-				self.clickPoint = None
-				self.zoomCoord = None
-				self.Pointer(Hand,0)
-				if self.cursor_level is not None:
-					win32api.ShowCursor(self.cursor_level)
-			elif self.mode == 1:
-				print "Scroller"
-				self.Scroller(Hand)
-				if self.cursor_level is not None:
-					win32api.ShowCursor(self.cursor_level)
-			elif self.mode == 2:
-				self.clickPoint = None
-				self.zoomCoord = None
-				print "Grabber"
-				self.Pointer(Hand,1)
-			else:
-				pass
+			if Hand:
+				fingers = Hand.fingers
+				extended_fingers = fingers.extended()
+				self.mode = 0
+				Ring = fingers.finger_type(3)[0]
+				Pinky = fingers.finger_type(4)[0]
+				if 2<= len(extended_fingers) <=3:
+					if Ring not in extended_fingers and Pinky not in extended_fingers:
+						Middle = fingers.finger_type(2)[0]
+						pinky_to_mid = Pinky.direction.angle_to(Middle.direction)
+						pinky_to_palm = Pinky.direction.angle_to(Hand.direction)
+						if 0.1 <= pinky_to_palm <= 3.5 and 0.1 <= pinky_to_mid <= 2.5:
+							self.mode = 1	
+							if self.clickPoint is None:
+								self.clickPoint = Hand.palm_position.z	
+								self.cursor_level = self.hideCursor()
+				elif Hand.grab_strength > 0.9 and Hand.palm_normal.x < -0.6:
+					self.mode = 2
+				else:
+					pass
+					
+				if self.mode == 0:
+					print "Pointer"
+					self.clickPoint = None
+					self.zoomCoord = None
+					self.Pointer(Hand,0)
+					if self.cursor_level is not None:
+						win32api.ShowCursor(self.cursor_level)
+				elif self.mode == 1:
+					print "Scroller"
+					self.Scroller(Hand)
+					if self.cursor_level is not None:
+						win32api.ShowCursor(self.cursor_level)
+				elif self.mode == 2:
+					self.clickPoint = None
+					self.zoomCoord = None
+					print "Grabber"
+					self.Pointer(Hand,1)
+				else:
+					pass
 	
 	def Scroller(self,hand):
 		handDir = hand.direction
@@ -78,7 +79,7 @@ class Mouse():
 		pitch = handDir.pitch
 		x,y = win32api.GetCursorPos()
 		print win32api.GetAsyncKeyState(win32con.VK_LCONTROL)
-		if pitch > 0.13:
+		if pitch > 0.16:
 			win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, 10, 0)
 			return 
 		if pitch < -0.2:
@@ -99,7 +100,7 @@ class Mouse():
 										x,y,
 										win_size[2]- win_size[0],
 										win_size[3] - win_size[1],
-										win32con.SWP_NOSIZE | win32con.SWP_NOZORDER | win32con.SWP_NOREDRAW )
+										win32con.SWP_NOSIZE)
 					return 
 			else:
 				win32api.SetCursorPos((x,y))
@@ -121,11 +122,11 @@ class Mouse():
 				else:
 					self.Zoom(1)
 			elif self.zoomCoord - z > 10.0:
-				self.Zoom(1)
+				self.Zoom(-1)
 				print "In"
 				self.zoomCoord = z
 			elif self.zoomCoord - z < -10.0:
-				self.Zoom(-1)
+				self.Zoom(1)
 				print "Out"
 				self.zoomCoord = z	
 				
