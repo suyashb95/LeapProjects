@@ -1,5 +1,5 @@
 from Controllers.FingerController import FingerListener
-import Leap
+from Controllers.Windows import Leap
 import sys
 
 def main():

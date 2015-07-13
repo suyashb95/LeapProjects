@@ -19,5 +19,6 @@ A python project using the Leap Motion API for image processing and gesture cont
 ###Dependencies
 * Pywin32 - Win32 API for Python
 * comtypes - Pure Python COM package
+
 ###Contributing
 All contributions are welcome
