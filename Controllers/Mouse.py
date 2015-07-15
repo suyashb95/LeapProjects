@@ -93,7 +93,7 @@ class Mouse():
 										x,y,
 										win_size[2]- win_size[0],
 										win_size[3] - win_size[1],
-										win32con.SWP_NOSIZE | win32con.SWP_NOOWNERZORDER)
+										win32con.SWP_NOSIZE)
 					return 
 			else:
 				win32api.SetCursorPos((x,y))
