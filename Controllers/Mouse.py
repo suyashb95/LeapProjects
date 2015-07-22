@@ -1,5 +1,6 @@
 from Windows import Leap
 import win32api,win32con,win32gui
+from VolumeTest import volume
 	
 
 class Mouse():
@@ -40,7 +41,7 @@ class Mouse():
 							self.mode = 1	
 							if self.clickPoint is None:
 								self.clickPoint = Hand.palm_position.z	
-								self.cursor_level = self.hideCursor()
+								#self.cursor_level = self.hideCursor()
 				elif Hand.grab_strength > 0.93 and Hand.palm_normal.x < -0.6:
 					self.mode = 2
 				else:
@@ -65,7 +66,12 @@ class Mouse():
 					self.Pointer(Hand,1)
 				else:
 					pass
-	
+		for gesture in frame.gestures():
+        	if gesture.type == Leap.Gesture.TYPE_CIRCLE:
+            	circle = Leap.CircleGesture(gesture)
+                if circle.radius > 50:
+                    self.volumeSetter(circle)
+					
 	def Scroller(self,hand):
 		handDir = hand.direction
 		handPos = hand.palm_position
@@ -152,8 +158,16 @@ class Mouse():
 		while win32api.ShowCursor(False) > -1:
 			win32api.ShowCursor(False)
 		return value
-
-
+		
+	def volumeSetter(circle):
+    	if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
+	        level = volume.GetMasterVolumeLevel()
+	        if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
+	            if level + 0.1 < 0:
+	                volume.SetMasterVolumeLevel(level + 0.1,None)
+	        else:
+	            if level - 0.1 > -64:
+	                volume.SetMasterVolumeLevel(level - 0.1,None)
 			
 					 
 		

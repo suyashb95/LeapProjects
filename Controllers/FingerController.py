@@ -9,20 +9,9 @@
 from Windows import Leap
 import sys
 from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
-from VolumeTest import volume
 import win32api,win32con
 from Mouse import Mouse
  
- 
-def volumeSetter(circle):
-    if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
-        level = volume.GetMasterVolumeLevel()
-        if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
-            if level + 0.1 < 0:
-                volume.SetMasterVolumeLevel(level + 0.1,None)
-        else:
-            if level - 0.1 > -64:
-                volume.SetMasterVolumeLevel(level - 0.1,None)
                 
 class FingerListener(Leap.Listener):
     
@@ -51,10 +40,6 @@ class FingerListener(Leap.Listener):
     def on_frame(self, controller):
         frame = controller.frame()
         self.mouse.Handler(frame)
-        for gesture in frame.gestures():
-            if gesture.type == Leap.Gesture.TYPE_CIRCLE:
-                circle = Leap.CircleGesture(gesture)
-                if circle.radius > 50:
-                    volumeSetter(circle)
+
                 
 
