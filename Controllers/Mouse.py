@@ -67,10 +67,10 @@ class Mouse():
 				else:
 					pass
 		for gesture in frame.gestures():
-        	if gesture.type == Leap.Gesture.TYPE_CIRCLE:
-            	circle = Leap.CircleGesture(gesture)
-                if circle.radius > 50:
-                    self.volumeSetter(circle)
+			if gesture.type == Leap.Gesture.TYPE_CIRCLE:
+				circle = Leap.CircleGesture(gesture)
+				if circle.radius > 50:
+					self.volumeSetter(circle)
 					
 	def Scroller(self,hand):
 		handDir = hand.direction
@@ -159,15 +159,15 @@ class Mouse():
 			win32api.ShowCursor(False)
 		return value
 		
-	def volumeSetter(circle):
-    	if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
-	        level = volume.GetMasterVolumeLevel()
-	        if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
-	            if level + 0.1 < 0:
-	                volume.SetMasterVolumeLevel(level + 0.1,None)
-	        else:
-	            if level - 0.1 > -64:
-	                volume.SetMasterVolumeLevel(level - 0.1,None)
+	def volumeSetter(self,circle):
+		if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
+			level = volume.GetMasterVolumeLevel()
+			if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
+				if level + 0.1 < 0:
+					volume.SetMasterVolumeLevel(level + 0.1,None)
+			else:
+				if level - 0.1 > -64:
+					volume.SetMasterVolumeLevel(level - 0.1,None)
 			
 					 
 		
