@@ -1,6 +1,6 @@
 from Windows import Leap
-import win32api,win32con,win32gui
-from VolumeTest import volume
+import win32api,win32con,win32gui,comtypes
+from VolumeTest import endpoint,IID_IAudioEndpointVolume,enumerator
 	
 
 class Mouse():
@@ -160,6 +160,8 @@ class Mouse():
 		return value
 		
 	def volumeSetter(self,circle):
+		endpoint = enumerator.GetDefaultAudioEndpoint(0,1)
+		volume = endpoint.Activate( IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None )
 		if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
 			level = volume.GetMasterVolumeLevel()
 			if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
