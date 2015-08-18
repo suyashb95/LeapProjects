@@ -5,12 +5,11 @@ from VolumeTest import endpoint,IID_IAudioEndpointVolume,enumerator
 
 class Mouse():
 	
-	def __init__(self,interaction_box):
+	def __init__(self,args):
 		self.screen_resolution = (win32api.GetSystemMetrics(0),
 									win32api.GetSystemMetrics(1))
 		self.center  = {'x':self.screen_resolution[0]/2,
 						'y':self.screen_resolution[1]/2}
-		self.interactionBox = interaction_box
 		self.scale_factor = {'x':self.screen_resolution[0]/400,
 							'y': self.screen_resolution[1]/350}
 		self.mode = 0
@@ -18,6 +17,7 @@ class Mouse():
 		self.clickPoint = None
 		self.zoomCoord = None
 		self.cursor_level = None
+		self.sensitivity = args.sensitivity
 		
 	def Handler(self,frame):
 		hands = frame.hands
@@ -89,8 +89,8 @@ class Mouse():
 	def Pointer(self,hand,grab):
 		handPos = hand.stabilized_palm_position
 		if -200 <= handPos.x <= 200 and 50 <= handPos.y <= 400:  
-			x = int(2*self.scale_factor['x']*hand.stabilized_palm_position.x) + self.center['x']
-			y = -int(2*self.scale_factor['y']*(hand.stabilized_palm_position.y - 225)) + self.center['y']
+			x = int(self.sensitivity*self.scale_factor['x']*hand.stabilized_palm_position.x) + self.center['x']
+			y = -int(self.sensitivity*self.scale_factor['y']*(hand.stabilized_palm_position.y - 225)) + self.center['y']
 			if grab != 0:
 				if 20 <= x <= 1900 and 20 <= y <= 1060:
 					win_handle = win32gui.GetForegroundWindow()

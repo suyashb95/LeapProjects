@@ -1,9 +1,14 @@
 from Controllers.FingerController import FingerListener
 from Controllers.Windows import Leap
 import sys
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-s','--sensitivity',default = 2, type = int, help = 'Set mouse sensitivity')
 
 def main():
-    listener = FingerListener()
+    args = parser.parse_args()
+    listener = FingerListener(args)
     controller = Leap.Controller()
     controller.set_policy_flags(Leap.Controller.POLICY_BACKGROUND_FRAMES)
     config = controller.config
@@ -13,5 +18,6 @@ def main():
     print "Press Enter to exit.."        
     sys.stdin.readline()
     controller.remove_listener(listener)  
-    
-main()
+
+if __name__ == '__main__':   
+    main()
