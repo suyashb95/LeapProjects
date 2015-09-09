@@ -5,7 +5,7 @@ from VolumeTest import endpoint,IID_IAudioEndpointVolume,enumerator
 
 class Mouse():
 	
-	def __init__(self,args):
+	def __init__(self):
 		self.screen_resolution = (win32api.GetSystemMetrics(0),
 									win32api.GetSystemMetrics(1))
 		self.center  = {'x':self.screen_resolution[0]/2,
@@ -17,7 +17,7 @@ class Mouse():
 		self.clickPoint = None
 		self.zoomCoord = None
 		self.cursor_level = None
-		self.sensitivity = args.sensitivity
+		self.sensitivity = 2
 		
 	def Handler(self,frame):
 		hands = frame.hands

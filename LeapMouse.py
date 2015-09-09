@@ -3,13 +3,13 @@ from Controllers.Windows import Leap
 import sys
 import argparse
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-s','--sensitivity',default = 2, type = int, help = 'Set mouse sensitivity')
+#parser = argparse.ArgumentParser()
+#parser.add_argument('-s','--sensitivity',default = 2, type = int, help = 'Set mouse sensitivity')
 
 def main():
-    args = parser.parse_args()
-    listener = FingerListener(args)
+    #args = parser.parse_args()
     controller = Leap.Controller()
+    listener = FingerListener()
     controller.set_policy_flags(Leap.Controller.POLICY_BACKGROUND_FRAMES)
     config = controller.config
     config.set("Gesture.Circle.MinRadius",100.0)

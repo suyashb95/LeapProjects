@@ -15,9 +15,9 @@ from Mouse import Mouse
                 
 class FingerListener(Leap.Listener):
     
-    def on_init(self, controller):
+    def on_init(self,controller):
         print "Initialized"
-        self.mouse = Mouse(controller.frame().interaction_box)
+        self.mouse = Mouse()
         #controller.set_policy(Leap.Controller.POLICY_IMAGES)
         
     def on_connect(self, controller):
