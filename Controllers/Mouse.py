@@ -17,7 +17,7 @@ class Mouse():
 		self.clickPoint = None
 		self.zoomCoord = None
 		self.cursor_level = None
-		self.sensitivity = 2
+		self.sensitivity = 2.5
 		
 	def Handler(self,frame):
 		hands = frame.hands
