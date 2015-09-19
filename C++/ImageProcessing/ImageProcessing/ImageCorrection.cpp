@@ -23,6 +23,8 @@ public:
 	virtual Mat slowInterpolation(const Image&);
 	virtual tuple<Mat, Mat> getDistortionMaps(const Image&);
 	virtual Mat correctImage(const Image&);
+	bool distortionInitFlag;
+	tuple<Mat, Mat> distortionMaps;
 private:
 
 };
@@ -32,6 +34,7 @@ const string boneNames[] = { "Metacarpal", "Proximal", "Middle", "Distal" };
 const string stateNames[] = { "STATE_INVALID", "STATE_START", "STATE_UPDATE", "STATE_END" };
 
 void SampleListener::onInit(const Controller& controller) {
+	distortionInitFlag = false;
 	cout << "Initialized" << endl;
 }
 
@@ -69,8 +72,11 @@ tuple<Mat, Mat> SampleListener::getDistortionMaps(const Image& image) {
 Mat SampleListener::correctImage(const Image& image) {
 	Mat destination(640,240,CV_8UC1,0);
 	Mat source(image.height(), image.width(), CV_8UC1, image.dataPointer());
-	tuple<Mat,Mat> maps = getDistortionMaps(image);
-	remap(source,destination,get<0>(maps),get<1>(maps), INTER_LINEAR, BORDER_TRANSPARENT);
+	if (!distortionInitFlag) {
+		distortionMaps = getDistortionMaps(image);
+		distortionInitFlag = true;
+	}
+	remap(source,destination,get<0>(distortionMaps),get<1>(distortionMaps), INTER_LINEAR, BORDER_TRANSPARENT);
 	return destination;
 }
 
@@ -140,18 +146,14 @@ Mat SampleListener::slowInterpolation(const Image& image){
 }
 
 void SampleListener::onFrame(const Controller& controller) {
-	Frame frame = controller.frame();
-	ImageList images = frame.images();
-	Image image = images[0];
-	if (image.isValid()) {
-		int height = image.height();
-		int width = image.width();
-		Mat distorted(height, width, CV_8UC1, image.dataPointer());
-		Mat undistorted = correctImage(image);
-		namedWindow("ABC", WINDOW_AUTOSIZE);
-		namedWindow("DEF", WINDOW_AUTOSIZE);
-		imshow("ABC", distorted);
-		imshow("DEF", undistorted);
+	ImageList images = controller.frame().images();
+	if (images[0].isValid() && images[1].isValid()) {
+		Mat undistortedLeft = correctImage(images[0]);
+		Mat undistortedRight = correctImage(images[1]);
+		namedWindow("Left", WINDOW_AUTOSIZE);
+		namedWindow("Right", WINDOW_AUTOSIZE);
+		imshow("Left", undistortedLeft);
+		imshow("Right", undistortedRight);
 		waitKey(1);
 	}
 }
