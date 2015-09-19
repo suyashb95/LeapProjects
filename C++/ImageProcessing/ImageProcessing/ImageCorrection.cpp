@@ -5,6 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
 #include <tuple>
 
 using namespace Leap;
@@ -23,6 +24,7 @@ public:
 	virtual Mat slowInterpolation(const Image&);
 	virtual tuple<Mat, Mat> getDistortionMaps(const Image&);
 	virtual Mat correctImage(const Image&);
+	virtual Mat getDisparityMap(Mat left, Mat right);
 	bool distortionInitFlag;
 	tuple<Mat, Mat> distortionMaps;
 private:
@@ -76,7 +78,7 @@ Mat SampleListener::correctImage(const Image& image) {
 		distortionMaps = getDistortionMaps(image);
 		distortionInitFlag = true;
 	}
-	remap(source,destination,get<0>(distortionMaps),get<1>(distortionMaps), INTER_LINEAR, BORDER_TRANSPARENT);
+	remap(source, destination, get<0>(distortionMaps), get<1>(distortionMaps), INTER_LINEAR, BORDER_CONSTANT, Scalar(0, 0, 0));
 	return destination;
 }
 
@@ -145,15 +147,32 @@ Mat SampleListener::slowInterpolation(const Image& image){
 	return undistorted;
 }
 
+Mat SampleListener::getDisparityMap(Mat left, Mat right) {
+	Mat Depth, normalizedDepth;
+	int ndisparities = 16 * 5;
+	Ptr<StereoBM> sbm = StereoBM::create(ndisparities, 5);
+	sbm->setPreFilterCap(30);
+	sbm->setMinDisparity(-50);
+	sbm->setUniquenessRatio(15);
+	sbm->setSpeckleWindowSize(150);
+	sbm->setSpeckleRange(50);
+	sbm->compute(left, right, Depth);
+	normalize(Depth, normalizedDepth, 0, 255, CV_MINMAX, CV_8U);
+	return normalizedDepth;
+}
+
 void SampleListener::onFrame(const Controller& controller) {
 	ImageList images = controller.frame().images();
 	if (images[0].isValid() && images[1].isValid()) {
 		Mat undistortedLeft = correctImage(images[0]);
 		Mat undistortedRight = correctImage(images[1]);
+		Mat disparityMap = getDisparityMap(undistortedLeft, undistortedRight);
 		namedWindow("Left", WINDOW_AUTOSIZE);
 		namedWindow("Right", WINDOW_AUTOSIZE);
+		namedWindow("Depth", WINDOW_AUTOSIZE);
 		imshow("Left", undistortedLeft);
 		imshow("Right", undistortedRight);
+		imshow("Disparity Map", disparityMap);
 		waitKey(1);
 	}
 }
