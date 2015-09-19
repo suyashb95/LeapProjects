@@ -14,8 +14,8 @@ def initDistortionMap(image):
     ymap = np.zeros(distortion_length/2, dtype=np.float32)
 
     for i in range(0,distortion_length,2):
-        xmap[distortion_length/2 - i/2 - 1] = image.distortion[i] * destinationWidth
-        ymap[distortion_length/2 - i/2 - 1] = image.distortion[i + 1] * destinationHeight
+       xmap[distortion_length/2 - i/2 - 1] = image.distortion[i] * destinationWidth
+       ymap[distortion_length/2 - i/2 - 1] = image.distortion[i + 1] * destinationHeight
     xmap = np.reshape(xmap, (image.distortion_height, image.distortion_width/2))
     ymap = np.reshape(ymap, (image.distortion_height, image.distortion_width/2))
     #resize the distortion map to equal desired destination image size
@@ -50,9 +50,9 @@ def process(controller):
                 left_x_map, left_y_map = initDistortionMap(frame.images[0])
                 right_x_map, right_y_map = initDistortionMap(frame.images[1])
                 mapInitialized = True
-
             undistortedLeft = interpolate(images[0], left_x_map, left_y_map)
             undistortedRight = interpolate(images[1], right_x_map, right_y_map)
+            #cv2.imshow("temp",left_y_map)
             cv2.imshow('left',undistortedLeft)
             cv2.imshow('right',undistortedRight)
             if cv2.waitKey(1) & 0xFF == ord('q'):
