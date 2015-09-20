@@ -6,9 +6,10 @@
 * Moving the hand in a circle of radius > 50 mm in clockwise/anticlockwise direction increases/decreases the master volume. 
 '''
 
-from Windows import Leap
+
 import sys
-from Leap import CircleGesture, KeyTapGesture, ScreenTapGesture, SwipeGesture
+import Leap
+from Leap import CircleGesture
 import win32api,win32con
 from Mouse import Mouse
  

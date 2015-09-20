@@ -1,4 +1,4 @@
-from Windows import Leap
+import Leap
 import win32api,win32con,win32gui,comtypes
 from VolumeTest import endpoint,IID_IAudioEndpointVolume,enumerator
 	
@@ -87,29 +87,30 @@ class Mouse():
 		self.zoomDetect(handPos.z)
 				
 	def Pointer(self,hand,grab):
-		handPos = hand.stabilized_palm_position
-		if -200 <= handPos.x <= 200 and 50 <= handPos.y <= 400:  
-			x = int(self.sensitivity*self.scale_factor['x']*hand.stabilized_palm_position.x) + self.center['x']
-			y = -int(self.sensitivity*self.scale_factor['y']*(hand.stabilized_palm_position.y - 225)) + self.center['y']
-			if grab != 0:
-				if 20 <= x <= 1900 and 20 <= y <= 1060:
-					win_handle = win32gui.GetForegroundWindow()
-					win_size = win32gui.GetWindowRect(win_handle)
-					win32gui.SetWindowPos(win_handle,win32con.HWND_TOP,
-										x,y,
-										win_size[2]- win_size[0],
-										win_size[3] - win_size[1],
-										win32con.SWP_NOSIZE)
-					return 
-			else:
-				win32api.SetCursorPos((x,y))
-				if hand.pinch_strength > 0.97 and self.clicked == 0:
-					win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
-					self.clicked = 1
-				if hand.pinch_strength <= 0.95 and self.clicked == 1:
-					win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
-					self.clicked = 0
-				return
+		if hand.translation_probability > 0.5:
+			handPos = hand.stabilized_palm_position
+			if -200 <= handPos.x <= 200 and 50 <= handPos.y <= 400:  
+				x = int(self.sensitivity*self.scale_factor['x']*hand.stabilized_palm_position.x) + self.center['x']
+				y = -int(self.sensitivity*self.scale_factor['y']*(hand.stabilized_palm_position.y - 225)) + self.center['y']
+				if grab != 0:
+					if 20 <= x <= 1900 and 20 <= y <= 1060:
+						win_handle = win32gui.GetForegroundWindow()
+						win_size = win32gui.GetWindowRect(win_handle)
+						win32gui.SetWindowPos(win_handle,win32con.HWND_TOP,
+											x,y,
+											win_size[2]- win_size[0],
+											win_size[3] - win_size[1],
+											win32con.SWP_NOSIZE)
+						return 
+				else:
+					win32api.SetCursorPos((x,y))
+					if hand.pinch_strength > 0.97 and self.clicked == 0:
+						win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN,x,y,0,0)
+						self.clicked = 1
+					if hand.pinch_strength <= 0.95 and self.clicked == 1:
+						win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
+						self.clicked = 0
+					return
 					
 	def zoomDetect(self,z):
 		if abs(z - self.clickPoint) > 30.0:
