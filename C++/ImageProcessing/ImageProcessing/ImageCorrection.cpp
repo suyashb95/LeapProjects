@@ -149,11 +149,11 @@ Mat SampleListener::slowInterpolation(const Image& image){
 
 Mat SampleListener::getDisparityMap(Mat left, Mat right) {
 	Mat Depth, normalizedDepth;
-	int ndisparities = 16 * 5;
+	int ndisparities = 16 * 4;
 	Ptr<StereoBM> sbm = StereoBM::create(ndisparities, 5);
-	sbm->setPreFilterCap(30);
-	sbm->setMinDisparity(-50);
-	sbm->setUniquenessRatio(15);
+	sbm->setPreFilterCap(25);
+	sbm->setMinDisparity(-60);
+	sbm->setUniquenessRatio(10);
 	sbm->setSpeckleWindowSize(150);
 	sbm->setSpeckleRange(50);
 	sbm->compute(left, right, Depth);
@@ -169,7 +169,7 @@ void SampleListener::onFrame(const Controller& controller) {
 		Mat disparityMap = getDisparityMap(undistortedLeft, undistortedRight);
 		namedWindow("Left", WINDOW_AUTOSIZE);
 		namedWindow("Right", WINDOW_AUTOSIZE);
-		namedWindow("Depth", WINDOW_AUTOSIZE);
+		namedWindow("Disparity Map", WINDOW_AUTOSIZE);
 		imshow("Left", undistortedLeft);
 		imshow("Right", undistortedRight);
 		imshow("Disparity Map", disparityMap);
