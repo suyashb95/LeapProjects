@@ -23,10 +23,11 @@ public:
 	virtual void onServiceDisconnect(const Controller&);
 	virtual Mat slowInterpolation(const Image&);
 	virtual tuple<Mat, Mat> getDistortionMaps(const Image&);
-	virtual Mat correctImage(const Image&);
+	virtual tuple<Mat,Mat> correctImages(const Image&, const Image&);
 	virtual Mat getDisparityMap(Mat left, Mat right);
 	bool distortionInitFlag;
-	tuple<Mat, Mat> distortionMaps;
+	tuple<Mat, Mat> leftDistortionMaps;
+	tuple<Mat, Mat> rightDistortionMaps;
 private:
 
 };
@@ -71,15 +72,20 @@ tuple<Mat, Mat> SampleListener::getDistortionMaps(const Image& image) {
 	return make_tuple(extended_xmap, extended_ymap);
 }
 
-Mat SampleListener::correctImage(const Image& image) {
-	Mat destination(640,240,CV_8UC1,0);
-	Mat source(image.height(), image.width(), CV_8UC1, image.dataPointer());
+tuple<Mat, Mat> SampleListener::correctImages(const Image& leftImage, const Image& rightImage) {
+	Mat leftDestination(640,240,CV_8UC1,0);
+	Mat rightDestination(640, 240, CV_8UC1, 0);
+	Mat leftSource(leftImage.height(), leftImage.width(), CV_8UC1, leftImage.dataPointer());
+	Mat rightSource(leftImage.height(), rightImage.width(), CV_8UC1, rightImage.dataPointer());
+
 	if (!distortionInitFlag) {
-		distortionMaps = getDistortionMaps(image);
+		leftDistortionMaps = getDistortionMaps(leftImage);
+		rightDistortionMaps = getDistortionMaps(rightImage);
 		distortionInitFlag = true;
 	}
-	remap(source, destination, get<0>(distortionMaps), get<1>(distortionMaps), INTER_LINEAR, BORDER_CONSTANT, Scalar(0, 0, 0));
-	return destination;
+	remap(leftSource, leftDestination, get<0>(leftDistortionMaps), get<1>(leftDistortionMaps), INTER_LINEAR, BORDER_CONSTANT, Scalar(0, 0, 0));
+	remap(rightSource, rightDestination, get<0>(rightDistortionMaps), get<1>(rightDistortionMaps), INTER_LINEAR, BORDER_CONSTANT, Scalar(0, 0, 0));
+	return make_tuple(leftDestination,rightDestination);
 }
 
 Mat SampleListener::slowInterpolation(const Image& image){
@@ -164,14 +170,13 @@ Mat SampleListener::getDisparityMap(Mat left, Mat right) {
 void SampleListener::onFrame(const Controller& controller) {
 	ImageList images = controller.frame().images();
 	if (images[0].isValid() && images[1].isValid()) {
-		Mat undistortedLeft = correctImage(images[0]);
-		Mat undistortedRight = correctImage(images[1]);
-		Mat disparityMap = getDisparityMap(undistortedLeft, undistortedRight);
+		tuple<Mat,Mat> undistortedImages = correctImages(images[0],images[1]);
+		Mat disparityMap = getDisparityMap(get<0>(undistortedImages), get<1>(undistortedImages));
 		namedWindow("Left", WINDOW_AUTOSIZE);
 		namedWindow("Right", WINDOW_AUTOSIZE);
 		namedWindow("Disparity Map", WINDOW_AUTOSIZE);
-		imshow("Left", undistortedLeft);
-		imshow("Right", undistortedRight);
+		imshow("Left", get<0>(undistortedImages));
+		imshow("Right", get<1>(undistortedImages));
 		imshow("Disparity Map", disparityMap);
 		waitKey(1);
 	}
