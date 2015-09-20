@@ -6,6 +6,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <opencv2/contrib/contrib.hpp>
 #include <tuple>
 
 using namespace Leap;
@@ -24,7 +25,8 @@ public:
 	virtual Mat slowInterpolation(const Image&);
 	virtual tuple<Mat, Mat> getDistortionMaps(const Image&);
 	virtual tuple<Mat,Mat> correctImages(const Image&, const Image&);
-	virtual Mat getDisparityMap(Mat left, Mat right);
+	virtual Mat getDisparityMap(Mat, Mat);
+	virtual Mat getSteroVar(Mat, Mat);
 	bool distortionInitFlag;
 	tuple<Mat, Mat> leftDistortionMaps;
 	tuple<Mat, Mat> rightDistortionMaps;
@@ -88,6 +90,58 @@ tuple<Mat, Mat> SampleListener::correctImages(const Image& leftImage, const Imag
 	return make_tuple(leftDestination,rightDestination);
 }
 
+Mat SampleListener::getDisparityMap(Mat left, Mat right) {
+	Mat Depth, normalizedDepth;
+	int ndisparities = 16 * 5;
+	StereoBM sbm(CV_STEREO_BM_NORMALIZED_RESPONSE,ndisparities,5);
+	sbm.state->preFilterCap = 30;
+	sbm.state->minDisparity = 50;
+	sbm.state->uniquenessRatio = 15;
+	sbm.state->speckleWindowSize = 150;
+	sbm.state->speckleRange = 50;
+	sbm.operator()(left, right, Depth);
+	normalize(Depth, normalizedDepth, 0, 255, CV_MINMAX, CV_8U);
+	return normalizedDepth;
+}
+
+Mat SampleListener::getSteroVar(Mat left, Mat right) {
+	Mat Depth, normalizedDepth;
+	StereoVar SVCalculator(3, 0.25, 50, -50, 50, 7, 1.1, 0.15, 0.15,
+							StereoVar::PENALIZATION_TICHONOV,
+							StereoVar::CYCLE_V,
+							StereoVar::USE_SMART_ID | StereoVar::USE_MEDIAN_FILTERING);
+	resize(left, left,Size() ,0.25, 0.25, INTER_CUBIC);
+	resize(right, right, Size(), 0.25, 0.25, INTER_CUBIC);
+	SVCalculator.operator()(left, right, Depth);
+	resize(Depth, Depth, Size(640, 240), 0, 0, INTER_CUBIC);
+	//normalize(Depth, normalizedDepth, 0, 255, CV_MINMAX, CV_8U);
+	return Depth;
+}
+
+void SampleListener::onFrame(const Controller& controller) {
+	ImageList images = controller.frame().images();
+	if (images[0].isValid() && images[1].isValid()) {
+		tuple<Mat,Mat> undistortedImages = correctImages(images[0],images[1]);
+		Mat disparityMap = getDisparityMap(get<0>(undistortedImages), get<1>(undistortedImages));
+		//Mat disparityMap = getSteroVar(get<0>(undistortedImages), get<1>(undistortedImages));
+		namedWindow("Left", WINDOW_AUTOSIZE);
+		namedWindow("Right", WINDOW_AUTOSIZE);
+		namedWindow("Disparity Map", WINDOW_AUTOSIZE);
+		imshow("Left", get<0>(undistortedImages));
+		imshow("Right", get<1>(undistortedImages));
+		imshow("Disparity Map", disparityMap);
+		waitKey(1);
+	}
+}
+
+void SampleListener::onServiceConnect(const Controller& controller) {
+	cout << "Service Connected" << endl;
+}
+
+void SampleListener::onServiceDisconnect(const Controller& controller) {
+	cout << "Service Disconnected" << endl;
+}
+
 Mat SampleListener::slowInterpolation(const Image& image){
 	float destinationWidth = 320;
 	float destinationHeight = 120;
@@ -148,46 +202,9 @@ Mat SampleListener::slowInterpolation(const Image& image){
 			}
 		}
 	}
-	Mat undistorted(destinationWidth, destinationHeight,CV_8UC1,destination);
+	Mat undistorted(destinationWidth, destinationHeight, CV_8UC1, destination);
 	transpose(undistorted, undistorted);
 	return undistorted;
-}
-
-Mat SampleListener::getDisparityMap(Mat left, Mat right) {
-	Mat Depth, normalizedDepth;
-	int ndisparities = 16 * 4;
-	Ptr<StereoBM> sbm = StereoBM::create(ndisparities, 5);
-	sbm->setPreFilterCap(25);
-	sbm->setMinDisparity(-60);
-	sbm->setUniquenessRatio(10);
-	sbm->setSpeckleWindowSize(150);
-	sbm->setSpeckleRange(50);
-	sbm->compute(left, right, Depth);
-	normalize(Depth, normalizedDepth, 0, 255, CV_MINMAX, CV_8U);
-	return normalizedDepth;
-}
-
-void SampleListener::onFrame(const Controller& controller) {
-	ImageList images = controller.frame().images();
-	if (images[0].isValid() && images[1].isValid()) {
-		tuple<Mat,Mat> undistortedImages = correctImages(images[0],images[1]);
-		Mat disparityMap = getDisparityMap(get<0>(undistortedImages), get<1>(undistortedImages));
-		namedWindow("Left", WINDOW_AUTOSIZE);
-		namedWindow("Right", WINDOW_AUTOSIZE);
-		namedWindow("Disparity Map", WINDOW_AUTOSIZE);
-		imshow("Left", get<0>(undistortedImages));
-		imshow("Right", get<1>(undistortedImages));
-		imshow("Disparity Map", disparityMap);
-		waitKey(1);
-	}
-}
-
-void SampleListener::onServiceConnect(const Controller& controller) {
-	cout << "Service Connected" << endl;
-}
-
-void SampleListener::onServiceDisconnect(const Controller& controller) {
-	cout << "Service Disconnected" << endl;
 }
 
 int main(int argc, char** argv) {
