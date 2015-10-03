@@ -2,6 +2,7 @@ A python/C++ project using the Leap Motion API for image processing and gesture 
 
 Installation
 ==========
+
 * Clone the repo or download the zip.
 * Make sure you have the Leap SDK installed.
 * run `pip install -r "requirements.txt"`
@@ -9,7 +10,9 @@ Installation
 
 Usage
 =====
+
 ###For LeapMouse
+
 * `cd` to the folder.
 * run `python LeapMouse.py`
 * The coordinates of the palm are used to move the mouse pointer around.
@@ -20,17 +23,39 @@ Usage
 * LeapMouse.py works only with Windows.
 
 ###Other scripts
+
 * `cd` to the folder and run `python <script>.py`
 * FingerPlot.py uses matplotlib to plot the coordinates of your fingertips.(Needs Numpy and matplotlib)
 * ImageCorrection.py uses bilinear interpolation to remove lens distortion from the Leap Motion controller's images
 * ImageCorrection.cpp does the same thing but is much faster. 
 
+Screenshots
+===========
+
+![alt tag](http://imgur.com/sWlKL9V)
+
+Right hand image
+
+![alt tag](http://imgur.com/gv2TEJP)
+
+Left hand image
+
+![alt tag](http://imgur.com/sksnwyT)
+
+Disparity map
+
+![alt tag](http://imgur.com/7IioUYL)
+
+Fingertip locations from FingerPlot.py
+
 
 Dependencies
 -----------------
+
 * Pywin32 - Win32 API for Python
 * comtypes - Pure Python COM package
 
 Contributing
 ---------------
+
 All contributions are welcome

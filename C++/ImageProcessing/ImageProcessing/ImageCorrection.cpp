@@ -94,11 +94,11 @@ Mat SampleListener::getDisparityMap(Mat left, Mat right) {
 	Mat Depth, normalizedDepth;
 	int ndisparities = 16 * 5;
 	StereoBM sbm(CV_STEREO_BM_NORMALIZED_RESPONSE,ndisparities,5);
-	sbm.state->preFilterCap = 30;
-	sbm.state->minDisparity = 50;
+	sbm.state->preFilterCap = 25;
+	sbm.state->minDisparity = -50;
 	sbm.state->uniquenessRatio = 15;
 	sbm.state->speckleWindowSize = 150;
-	sbm.state->speckleRange = 50;
+	sbm.state->speckleRange = 20;
 	sbm.operator()(left, right, Depth);
 	normalize(Depth, normalizedDepth, 0, 255, CV_MINMAX, CV_8U);
 	return normalizedDepth;
