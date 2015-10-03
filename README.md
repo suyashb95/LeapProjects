@@ -32,19 +32,19 @@ Usage
 Screenshots
 ===========
 
-![alt tag](http://imgur.com/sWlKL9V)
+![alt tag](http://i.imgur.com/sWlKL9V.png)
 
 Right hand image
 
-![alt tag](http://imgur.com/gv2TEJP)
+![alt tag](http://i.imgur.com/gv2TEJP.png)
 
 Left hand image
 
-![alt tag](http://imgur.com/sksnwyT)
+![alt tag](http://i.imgur.com/sksnwyT.png)
 
 Disparity map
 
-![alt tag](http://imgur.com/7IioUYL)
+![alt tag](http://i.imgur.com/7IioUYL.png)
 
 Fingertip locations from FingerPlot.py
 
