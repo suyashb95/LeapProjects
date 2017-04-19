@@ -1,17 +1,23 @@
 import Leap
 import win32api,win32con,win32gui,comtypes
-from VolumeTest import endpoint,IID_IAudioEndpointVolume,enumerator
+from .VolumeTest import endpoint, IID_IAudioEndpointVolume, enumerator
 	
 
 class Mouse():
 	
 	def __init__(self):
-		self.screen_resolution = (win32api.GetSystemMetrics(0),
-									win32api.GetSystemMetrics(1))
-		self.center  = {'x':self.screen_resolution[0]/2,
-						'y':self.screen_resolution[1]/2}
-		self.scale_factor = {'x':self.screen_resolution[0]/400,
-							'y': self.screen_resolution[1]/350}
+		self.screen_resolution = (
+			win32api.GetSystemMetrics(0),
+			win32api.GetSystemMetrics(1)
+		)
+		self.center  = {
+			'x':self.screen_resolution[0]/2,
+			'y':self.screen_resolution[1]/2
+		}
+		self.scale_factor = {
+			'x':self.screen_resolution[0]/400,
+			'y':self.screen_resolution[1]/350
+		}
 		self.mode = 0
 		self.clicked = 0
 		self.clickPoint = None
@@ -86,7 +92,7 @@ class Mouse():
 			return 
 		self.zoomDetect(handPos.z)
 				
-	def Pointer(self,hand,grab):
+	def Pointer(self, hand, grab):
 		if hand.translation_probability > 0.5:
 			handPos = hand.stabilized_palm_position
 			if -200 <= handPos.x <= 200 and 50 <= handPos.y <= 400:  
@@ -96,11 +102,14 @@ class Mouse():
 					if 20 <= x <= 1900 and 20 <= y <= 1060:
 						win_handle = win32gui.GetForegroundWindow()
 						win_size = win32gui.GetWindowRect(win_handle)
-						win32gui.SetWindowPos(win_handle,win32con.HWND_TOP,
-											x,y,
-											win_size[2]- win_size[0],
-											win_size[3] - win_size[1],
-											win32con.SWP_NOSIZE)
+						win32gui.SetWindowPos(
+							win_handle,win32con.HWND_TOP,
+							x,
+							y,
+							win_size[2]- win_size[0],
+							win_size[3] - win_size[1],
+							win32con.SWP_NOSIZE
+						)
 						return 
 				else:
 					win32api.SetCursorPos((x,y))
@@ -162,7 +171,7 @@ class Mouse():
 		
 	def volumeSetter(self,circle):
 		endpoint = enumerator.GetDefaultAudioEndpoint(0,1)
-		volume = endpoint.Activate( IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None )
+		volume = endpoint.Activate(IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None )
 		if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
 			level = volume.GetMasterVolumeLevel()
 			if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
@@ -171,10 +180,3 @@ class Mouse():
 			else:
 				if level - 0.1 > -64:
 					volume.SetMasterVolumeLevel(level - 0.1,None)
-			
-					 
-		
-		
-			
-			
-	

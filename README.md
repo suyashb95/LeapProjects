@@ -11,7 +11,7 @@ Installation
 Usage
 =====
 
-###For LeapMouse
+### For LeapMouse
 
 * `cd` to the folder.
 * run `python LeapMouse.py`
@@ -22,7 +22,7 @@ Usage
 * Moving the hand in a circle of radius > 50 mm in clockwise/anticlockwise direction increases/decreases the master volume. 
 * LeapMouse.py works only with Windows.
 
-###Other scripts
+### Other scripts
 
 * `cd` to the folder and run `python <script>.py`
 * FingerPlot.py uses matplotlib to plot the coordinates of your fingertips.(Needs Numpy and matplotlib)

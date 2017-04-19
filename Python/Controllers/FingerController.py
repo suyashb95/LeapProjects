@@ -10,19 +10,19 @@
 import sys
 import Leap
 from Leap import CircleGesture
-import win32api,win32con
-from Mouse import Mouse
+import win32api, win32con
+from .Mouse import Mouse
  
                 
 class FingerListener(Leap.Listener):
     
     def on_init(self,controller):
-        print "Initialized"
+        print("Initialized")
         self.mouse = Mouse()
         #controller.set_policy(Leap.Controller.POLICY_IMAGES)
         
     def on_connect(self, controller):
-        print "Connected"
+        print("Connected")
        
        #Enable gestures
         controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
@@ -32,11 +32,11 @@ class FingerListener(Leap.Listener):
 
     def on_disconnect(self, controller):
         # Note: not dispatched when running in a debugger.
-        print "Disconnected"
+        print("Disconnected")
         
         
     def on_exit(self, controller):
-        print "Exited"
+        print("Exited")
                         
     def on_frame(self, controller):
         frame = controller.frame()

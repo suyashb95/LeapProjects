@@ -1,5 +1,5 @@
 from Controllers.FingerController import FingerListener
-from Controllers.Windows import Leap
+import Leap
 import sys
 import argparse
 
@@ -15,7 +15,7 @@ def main():
     config.set("Gesture.Circle.MinRadius",100.0)
     config.set("Gesture.Circle.MinArc",30 * Leap.PI)
     controller.add_listener(listener)       
-    print "Press Enter to exit.."        
+    print("Press Enter to exit..")
     sys.stdin.readline()
     controller.remove_listener(listener)  
 

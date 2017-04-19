@@ -1,4 +1,4 @@
-from Controllers.Windows import Leap
+import Leap
 import sys
 import matplotlib.pyplot as plt
 from matplotlib import animation
