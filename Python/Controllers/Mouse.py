@@ -1,10 +1,8 @@
 import Leap
 import win32api,win32con,win32gui,comtypes
 from .VolumeTest import endpoint, IID_IAudioEndpointVolume, enumerator
-	
 
 class Mouse():
-	
 	def __init__(self):
 		self.screen_resolution = (
 			win32api.GetSystemMetrics(0),
@@ -24,7 +22,7 @@ class Mouse():
 		self.zoomCoord = None
 		self.cursor_level = None
 		self.sensitivity = 2.5
-		
+
 	def Handler(self,frame):
 		hands = frame.hands
 		if hands:
@@ -44,15 +42,15 @@ class Mouse():
 						pinky_to_mid = Pinky.direction.angle_to(Middle.direction)
 						pinky_to_palm = Pinky.direction.angle_to(Hand.direction)
 						if 0.1 <= pinky_to_palm <= 3.5 and 0.1 <= pinky_to_mid <= 2.5:
-							self.mode = 1	
+							self.mode = 1
 							if self.clickPoint is None:
-								self.clickPoint = Hand.palm_position.z	
+								self.clickPoint = Hand.palm_position.z
 								#self.cursor_level = self.hideCursor()
 				elif Hand.grab_strength > 0.93 and Hand.palm_normal.x < -0.6:
 					self.mode = 2
 				else:
 					pass
-					
+
 				if self.mode == 0:
 					#print "Pointer"
 					self.clickPoint = None
@@ -77,7 +75,7 @@ class Mouse():
 				circle = Leap.CircleGesture(gesture)
 				if circle.radius > 50:
 					self.volumeSetter(circle)
-					
+
 	def Scroller(self,hand):
 		handDir = hand.direction
 		handPos = hand.palm_position
@@ -86,16 +84,16 @@ class Mouse():
 		#print win32api.GetAsyncKeyState(win32con.VK_LCONTROL)
 		if pitch > 0.175:
 			win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, 10, 0)
-			return 
+			return
 		if pitch < -0.2:
 			win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, -10, 0)
-			return 
+			return
 		self.zoomDetect(handPos.z)
-				
+
 	def Pointer(self, hand, grab):
 		if hand.translation_probability > 0.5:
 			handPos = hand.stabilized_palm_position
-			if -200 <= handPos.x <= 200 and 50 <= handPos.y <= 400:  
+			if -200 <= handPos.x <= 200 and 50 <= handPos.y <= 400:
 				x = int(self.sensitivity*self.scale_factor['x']*hand.stabilized_palm_position.x) + self.center['x']
 				y = -int(self.sensitivity*self.scale_factor['y']*(hand.stabilized_palm_position.y - 225)) + self.center['y']
 				if grab != 0:
@@ -110,7 +108,7 @@ class Mouse():
 							win_size[3] - win_size[1],
 							win32con.SWP_NOSIZE
 						)
-						return 
+						return
 				else:
 					win32api.SetCursorPos((x,y))
 					if hand.pinch_strength > 0.97 and self.clicked == 0:
@@ -120,7 +118,7 @@ class Mouse():
 						win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
 						self.clicked = 0
 					return
-					
+
 	def zoomDetect(self,z):
 		if abs(z - self.clickPoint) > 30.0:
 			#print "Zoom"
@@ -137,8 +135,8 @@ class Mouse():
 			elif self.zoomCoord - z < -10.0:
 				self.Zoom(1)
 				#print "Out"
-				self.zoomCoord = z	
-				
+				self.zoomCoord = z
+
 	def Zoom(self,zoomFactor):
 		x,y = win32api.GetCursorPos()
 		if zoomFactor < 0:
@@ -149,26 +147,26 @@ class Mouse():
 			self.keyPress(win32con.VK_LCONTROL)
 			win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, -1, 0)
 			self.keyRelease(win32con.VK_LCONTROL)
-			
+
 	def keyPress(self,key_code):
 		if win32api.GetAsyncKeyState(key_code):
 			return
 		while not win32api.GetAsyncKeyState(key_code):
 			win32api.keybd_event(key_code,0,win32con.WM_KEYDOWN,0)
-		
-			
+
+
 	def keyRelease(self,key_code):
 		if not win32api.GetAsyncKeyState(key_code):
 			return
 		while win32api.GetAsyncKeyState(key_code):
 			win32api.keybd_event(key_code,0,win32con.KEYEVENTF_KEYUP,0)
-		
+
 	def hideCursor(self):
 		value = win32api.ShowCursor(False) + 1
 		while win32api.ShowCursor(False) > -1:
 			win32api.ShowCursor(False)
 		return value
-		
+
 	def volumeSetter(self,circle):
 		endpoint = enumerator.GetDefaultAudioEndpoint(0,1)
 		volume = endpoint.Activate(IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None )
