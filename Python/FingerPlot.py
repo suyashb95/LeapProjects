@@ -1,39 +1,51 @@
 import Leap
 import sys
-import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 from matplotlib import animation
 import numpy as np
 
+controller = Leap.Controller()
+controller.set_policy_flags(Leap.Controller.POLICY_BACKGROUND_FRAMES)
+
 fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d', xlim=(-500, 500), ylim=(-500, 500), zlim=(-500, 500))
-h1, = ax.plot([], [], [], linestyle="", marker="o")
+ax = fig.add_subplot(111, projection='3d', xlim=(-300, 400), ylim=(-200, 400), zlim=(-300, 300))
+ax.view_init(elev=10., azim=250)
 
-fingersPosX = np.array([0, 0, 0, 0, 0], dtype='float')
-fingersPosY = np.array([0, 0, 0, 0, 0], dtype='float')
-fingersPosZ = np.array([0, 0, 0, 0, 0], dtype='float')
+points = np.zeros((3, 6))
+colors = np.array([100, 100, 100, 100, 100, 500])
 
-def init():
-	h1.set_data(fingersPosX, fingersPosY)
-	h1.set_3d_properties(fingersPosZ)
-	return [h1]
+patches = ax.scatter(points[0], points[1], points[2], c='red', s=[20, 20, 20, 20, 20, 50])
 
-def animate(fn,controller):
+def get_points():
 	frame = controller.frame()
 	hand = frame.hands.rightmost
+	if not hand.is_valid: return np.array(patches._offsets3d)
 	fingers = hand.fingers
-	for finger in (fingers):
-		fingersPosX[finger.type] = finger.stabilized_tip_position.x
-		fingersPosY[finger.type] = finger.stabilized_tip_position.y
-		fingersPosZ[finger.type] = finger.stabilized_tip_position.z
-	h1.set_data(fingersPosX, fingersPosY)
-	h1.set_3d_properties(fingersPosZ)
-	return [h1]
+	X = [finger.stabilized_tip_position.x for finger in fingers]
+	X.append(hand.palm_position.x)
+	Y = [finger.stabilized_tip_position.y for finger in fingers]
+	Y.append(hand.palm_position.y)
+	Z = [finger.stabilized_tip_position.z for finger in fingers]
+	Z.append(hand.palm_position.z)
+	return np.array([X, Z, Y])
+
+def plot_points():
+	points = get_points()
+	patches.set_offsets(points[:2].T)
+	patches.set_3d_properties(points[2], zdir='z')
+	patches.set_array(colors)
+
+def init():
+	plot_points()
+	return patches,
+
+def animate(i):
+	plot_points()
+	return patches,
 
 def main():
-	controller = Leap.Controller()
-	controller.set_policy_flags(Leap.Controller.POLICY_BACKGROUND_FRAMES)
-	anim = animation.FuncAnimation(fig, animate, fargs=(controller,), init_func = init, interval=1, blit=True)
+	anim = animation.FuncAnimation(fig, animate, init_func=init, blit=False, frames=360, interval=20)
 	try:
 		plt.show()
 	except KeyboardInterrupt:
