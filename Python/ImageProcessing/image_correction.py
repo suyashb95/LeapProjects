@@ -10,6 +10,13 @@ DESTINATION_WIDTH = 640
 
 destination = np.empty((DESTINATION_HEIGHT, DESTINATION_WIDTH), dtype=np.ubyte)
 
+Q = np.array([
+    [1., 0., 0., -280.7162652 ],
+    [0., 1., 0. , -118.74788302],
+    [0., 0., 0., 67.35],
+    [0., 0., 0.35696326, -0.]
+])
+
 def initDistortionMap(image):
     distortion_length = image.distortion_width * image.distortion_height
     xmap = np.zeros(distortion_length // 2, dtype=np.float32)
@@ -42,14 +49,21 @@ def interpolate(image, xmap, ymap):
 
 def process(controller):
     map_initialized = False
-    stereo_matcher = cv2.StereoBM_create(numDisparities=16*8, blockSize=5)
-    stereo_matcher.setPreFilterType(cv2.STEREO_BM_PREFILTER_NORMALIZED_RESPONSE)
-    stereo_matcher.setPreFilterCap(25)
-    stereo_matcher.setMinDisparity(-50)
-    stereo_matcher.setUniquenessRatio(15)
-    stereo_matcher.setSpeckleWindowSize(150)
-    stereo_matcher.setSpeckleRange(20)
+    stereo_matcher = cv2.StereoBM_create(numDisparities=16*8, blockSize=11)
+    stereo_matcher.setMinDisparity(-80)
+    stereo_matcher.setUniquenessRatio(50)
 
+    stereo_matcher.setPreFilterType(cv2.STEREO_BM_PREFILTER_NORMALIZED_RESPONSE)
+    stereo_matcher.setPreFilterSize(7)
+    stereo_matcher.setPreFilterCap(50)
+
+    stereo_matcher.setSpeckleWindowSize(10)
+    stereo_matcher.setSpeckleRange(10)
+
+    wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo_matcher)
+    wls_filter.setLambda(80000)
+    wls_filter.setSigmaColor(1.2)
+    right_matcher = cv2.ximgproc.createRightMatcher(stereo_matcher)
     while True:
         frame = controller.frame()
         images = frame.images
@@ -60,11 +74,14 @@ def process(controller):
                 map_initialized = True
             undistorted_left = interpolate(images[0], left_x_map, left_y_map)
             undistorted_right = interpolate(images[1], right_x_map, right_y_map)
-            cv2.imshow('left', undistorted_left)
-            cv2.imshow('right', undistorted_right)
-            disparity = stereo_matcher.compute(undistorted_left, undistorted_right, None)
-            depth = cv2.normalize(disparity, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
-            cv2.imshow('disparity', depth)
+            # cv2.imshow('left', undistorted_left)
+            # cv2.imshow('right', undistorted_right)
+            dispL = np.int16(stereo_matcher.compute(undistorted_left, undistorted_right))
+            dispR = np.int16(right_matcher.compute(undistorted_right, undistorted_left))
+            filteredDisparity = wls_filter.filter(dispL, undistorted_left, None, dispR)
+            depth = cv2.normalize(filteredDisparity, None, beta=0, alpha=255, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+            points = cv2.reprojectImageTo3D(filteredDisparity, Q)
+            cv2.imshow('depth', points)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
