@@ -4,9 +4,10 @@ from .VolumeTest import endpoint, IID_IAudioEndpointVolume, enumerator
 
 class Mouse():
 	def __init__(self):
+		self.num_monitors = win32api.GetSystemMetrics(80)
 		self.screen_resolution = (
-			win32api.GetSystemMetrics(0),
-			win32api.GetSystemMetrics(1)
+			win32api.GetSystemMetrics(59),
+			win32api.GetSystemMetrics(60)
 		)
 		self.center  = {
 			'x':self.screen_resolution[0]/2,
@@ -23,54 +24,47 @@ class Mouse():
 		self.cursor_level = None
 		self.sensitivity = 2.5
 
-	def Handler(self,frame):
-		hands = frame.hands
-		if hands:
-			Hand = None
-			for item in hands:
-				if item.is_right:
-					Hand = item
-			if Hand:
-				fingers = Hand.fingers
-				extended_fingers = fingers.extended()
-				self.mode = 0
-				Ring = fingers.finger_type(3)[0]
-				Pinky = fingers.finger_type(4)[0]
-				if 2<= len(extended_fingers) <=3:
-					if Ring not in extended_fingers and Pinky not in extended_fingers:
-						Middle = fingers.finger_type(2)[0]
-						pinky_to_mid = Pinky.direction.angle_to(Middle.direction)
-						pinky_to_palm = Pinky.direction.angle_to(Hand.direction)
-						if 0.1 <= pinky_to_palm <= 3.5 and 0.1 <= pinky_to_mid <= 2.5:
-							self.mode = 1
-							if self.clickPoint is None:
-								self.clickPoint = Hand.palm_position.z
-								#self.cursor_level = self.hideCursor()
-				elif Hand.grab_strength > 0.93 and Hand.palm_normal.x < -0.6:
-					self.mode = 2
-				else:
-					pass
-
-				if self.mode == 0:
-					#print "Pointer"
-					self.clickPoint = None
-					self.zoomCoord = None
-					self.Pointer(Hand,0)
-					if self.cursor_level is not None:
-						win32api.ShowCursor(self.cursor_level)
-				elif self.mode == 1:
-					#print "Scroller"
-					self.Scroller(Hand)
-					if self.cursor_level is not None:
-						win32api.ShowCursor(self.cursor_level)
-				elif self.mode == 2:
-					self.clickPoint = None
-					self.zoomCoord = None
-					#print "Grabber"
-					self.Pointer(Hand,1)
-				else:
-					pass
-		for gesture in frame.gestures():
+	def Handler(self, controller):
+		current_frame = controller.frame()
+		prev_frame = controller.frame(30)
+		right_hand = list(filter(lambda x: x.is_right, current_frame.hands))[0]
+		if right_hand:
+			fingers = right_hand.fingers
+			extended_fingers = fingers.extended()
+			self.mode = 0
+			ring = fingers.finger_type(3)[0]
+			pinky = fingers.finger_type(4)[0]
+			if 2 <= len(extended_fingers) <= 3:
+				if ring not in extended_fingers and pinky not in extended_fingers:
+					middle = fingers.finger_type(2)[0]
+					pinky_to_mid = pinky.direction.angle_to(middle.direction)
+					pinky_to_palm = pinky.direction.angle_to(right_hand.direction)
+					if 0.1 <= pinky_to_palm <= 3.5 and 0.1 <= pinky_to_mid <= 2.5:
+						self.mode = 1
+						if self.clickPoint is None:
+							self.clickPoint = right_hand.palm_position.z
+			elif right_hand.grab_strength > 0.93 and right_hand.palm_normal.x < -0.6:
+				self.mode = 2
+			if self.mode == 0:
+				#print "Pointer"
+				self.clickPoint = None
+				self.zoomCoord = None
+				self.Pointer(right_hand, 0)
+				if self.cursor_level is not None:
+					win32api.ShowCursor(self.cursor_level)
+			elif self.mode == 1:
+				#print "Scroller"
+				self.Scroller(right_hand)
+				if self.cursor_level is not None:
+					win32api.ShowCursor(self.cursor_level)
+			elif self.mode == 2:
+				self.clickPoint = None
+				self.zoomCoord = None
+				#print "Grabber"
+				self.Pointer(right_hand, 1)
+			else:
+				pass
+		for gesture in current_frame.gestures():
 			if gesture.type == Leap.Gesture.TYPE_CIRCLE:
 				circle = Leap.CircleGesture(gesture)
 				if circle.radius > 50:
@@ -108,7 +102,6 @@ class Mouse():
 							win_size[3] - win_size[1],
 							win32con.SWP_NOSIZE
 						)
-						return
 				else:
 					win32api.SetCursorPos((x,y))
 					if hand.pinch_strength > 0.97 and self.clicked == 0:
@@ -117,7 +110,6 @@ class Mouse():
 					if hand.pinch_strength <= 0.95 and self.clicked == 1:
 						win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP,x,y,0,0)
 						self.clicked = 0
-					return
 
 	def zoomDetect(self,z):
 		if abs(z - self.clickPoint) > 30.0:
@@ -167,7 +159,7 @@ class Mouse():
 			win32api.ShowCursor(False)
 		return value
 
-	def volumeSetter(self,circle):
+	def volumeSetter(self, circle):
 		endpoint = enumerator.GetDefaultAudioEndpoint(0,1)
 		volume = endpoint.Activate(IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None )
 		if circle.radius >= 50 and circle.pointable.tip_velocity > 700:

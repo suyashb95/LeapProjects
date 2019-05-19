@@ -3,8 +3,10 @@ import sys
 import cv2
 import Leap
 import numpy as np
+import pcl
 from pyqtgraph.Qt import QtCore, QtGui
-from camera_constants import Q, DESTINATION_HEIGHT, DESTINATION_WIDTH
+from camera_constants import *
+from utils import *
 import pyqtgraph.opengl as gl
 
 controller = Leap.Controller()
@@ -21,80 +23,66 @@ w.addItem(g)
 
 destination = np.empty((DESTINATION_HEIGHT, DESTINATION_WIDTH), dtype=np.ubyte)
 
-stereo_matcher = cv2.StereoBM_create(numDisparities=16*8, blockSize=7)
-stereo_matcher.setMinDisparity(-100)
-stereo_matcher.setUniquenessRatio(10)
-
+stereo_matcher = cv2.StereoBM_create(numDisparities=16*5, blockSize=7)
+stereo_matcher.setMinDisparity(-80)
+stereo_matcher.setUniquenessRatio(15)
 stereo_matcher.setPreFilterType(cv2.STEREO_BM_PREFILTER_NORMALIZED_RESPONSE)
 stereo_matcher.setPreFilterSize(5)
 stereo_matcher.setPreFilterCap(50)
 
-stereo_matcher.setSpeckleWindowSize(50)
+stereo_matcher.setSpeckleWindowSize(30)
 stereo_matcher.setSpeckleRange(10)
 
 wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo_matcher)
-wls_filter.setLambda(80000)
-wls_filter.setSigmaColor(1.2)
+wls_filter.setLambda(20000)
+wls_filter.setSigmaColor(1.6)
 right_matcher = cv2.ximgproc.createRightMatcher(stereo_matcher)
 
-def init_distortion_map(image):
-    distortion_length = image.distortion_width * image.distortion_height
-    xmap = np.zeros(distortion_length // 2, dtype=np.float32)
-    ymap = np.zeros(distortion_length // 2, dtype=np.float32)
+right_rectification_map = cv2.initUndistortRectifyMap(C2, D2, R2, P2, (DESTINATION_HEIGHT, DESTINATION_WIDTH), cv2.CV_16SC2)
+left_rectification_map = cv2.initUndistortRectifyMap(C1, D1, R1, P1, (DESTINATION_HEIGHT, DESTINATION_WIDTH), cv2.CV_16SC2)
 
-    for i in range(0, distortion_length, 2):
-        xmap[distortion_length // 2 - i // 2 - 1] = image.distortion[i] * DESTINATION_WIDTH
-        ymap[distortion_length // 2 - i // 2 - 1] = image.distortion[i + 1] * DESTINATION_HEIGHT
-    xmap = np.reshape(xmap, (image.distortion_height, image.distortion_width // 2))
-    ymap = np.reshape(ymap, (image.distortion_height, image.distortion_width // 2))
-
-    #resize the distortion map to equal desired destination image size
-    expanded_xmap = cv2.resize(xmap, (DESTINATION_WIDTH, DESTINATION_HEIGHT), 0, 0, cv2.INTER_LINEAR)
-    expanded_ymap = cv2.resize(ymap, (DESTINATION_WIDTH, DESTINATION_HEIGHT), 0, 0, cv2.INTER_LINEAR)
-    return expanded_xmap, expanded_ymap
-
-frame = controller.frame()
-images = frame.images
-left_x_map, left_y_map = init_distortion_map(frame.images[0])
-right_x_map, right_y_map = init_distortion_map(frame.images[1])
-
-def interpolate(image, xmap, ymap):
-    #wrap image data in numpy array
-    i_address = int(image.data_pointer)
-    ctype_array_def = ctypes.c_ubyte * image.height * image.width
-    # as ctypes array
-    as_ctype_array = ctype_array_def.from_address(i_address)
-    # as numpy array
-    as_numpy_array = np.ctypeslib.as_array(as_ctype_array)
-    img = np.reshape(as_numpy_array, (image.height, image.width))
-    #remap image to destination
-    return cv2.remap(img, xmap, ymap, interpolation=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT)
-
-scatterplot_items = gl.GLScatterPlotItem(pos=np.array([]), color=(1,1,1,.3), size=0.05, pxMode=False)
+scatterplot_items = gl.GLScatterPlotItem(pos=np.empty([3, 3]), color=(1,1,1,.3), size=0.05, pxMode=False)
 scatterplot_items.rotate(180, 1, 0, 0)
 w.addItem(scatterplot_items)
 
 def process():
-    global map_initialized, scatterplot_items
     frame = controller.frame()
     images = frame.images
-    if images[0].is_valid and images[1].is_valid:
-        undistorted_left = interpolate(images[0], left_x_map, left_y_map)
-        undistorted_right = interpolate(images[1], right_x_map, right_y_map)
-        dispL = np.int16(stereo_matcher.compute(undistorted_left, undistorted_right))
-        dispR = np.int16(right_matcher.compute(undistorted_right, undistorted_left))
-        filteredDisparity = wls_filter.filter(dispL, undistorted_left, None, dispR)
-        points = cv2.reprojectImageTo3D(filteredDisparity, Q, handleMissingValues=True).reshape(640 * 240, 3)
-        points = points[points[:,2] < 0]
-        scatterplot_items.setData(pos=points)
+    left_x_map, left_y_map = init_distortion_map(images[0])
+    right_x_map, right_y_map = init_distortion_map(images[1])
+    scatterplot_items = gl.GLScatterPlotItem(pos=np.empty([3, 3]), color=(1,1,1,.3), size=0.05, pxMode=False)
+    scatterplot_items.rotate(180, 1, 0, 0)
+    w.addItem(scatterplot_items)
 
-t = QtCore.QTimer()
-t.timeout.connect(process)
-t.start(20)
+    while True:
+        frame = controller.frame()
+        images = frame.images
+        if images[0].is_valid and images[1].is_valid:
+            images = (convert_image_format(frame.images[0]), convert_image_format(frame.images[1]))
+            undistorted_left = undistort(images[0], left_x_map, left_y_map)
+            undistorted_right = undistort(images[1], right_x_map, right_y_map)
+            dispL = np.int16(stereo_matcher.compute(undistorted_left, undistorted_right))
+            dispR = np.int16(right_matcher.compute(undistorted_right, undistorted_left))
+            filteredDisparity = wls_filter.filter(dispL, undistorted_left, None, dispR)
+            reprojected_image = cv2.reprojectImageTo3D(filteredDisparity, Q, handleMissingValues=True)
+            points = reprojected_image.reshape(640*240, 3)
+            points = points[points[:,2] < 0]
+            points = points[points[:,2] > -120]
+            scatterplot_items.setData(pos=points)
+            cv2.imshow('dummy', undistorted_left)
+        if cv2.waitKey(1) & 0xFF == ord('d'):
+            print("here")
+            point_cloud = pcl.PointCloud()
+            point_cloud.from_array(points)
+            print(point_cloud)
+            pcl.save(point_cloud, 'point_cloud.pcd', format='pcd')
+            break
 
 def main():
-    if (sys.flags.interactive != 1) or not hasattr(QtCore, 'PYQT_VERSION'):
-        QtGui.QApplication.instance().exec_()
+    try:
+        process()
+    except KeyboardInterrupt:
+        sys.exit(0)
 
 if __name__ == '__main__':
     main()

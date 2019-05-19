@@ -284,3 +284,5 @@ Status API Training Shop Blog About Pricing
 Notes.txt
 
 .vscode/*
+*.ply
+*.pcd

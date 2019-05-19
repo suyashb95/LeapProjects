@@ -5,7 +5,8 @@ import Leap
 
 import numpy as np
 
-from camera_constants import C1, C2, D1, D2, R, T, E, F, Q, DESTINATION_HEIGHT, DESTINATION_WIDTH
+from camera_constants import *
+from utils import *
 
 board_size = (5, 4)
 
@@ -18,36 +19,7 @@ obj = np.array([np.array(((i / board_size[0]) * square_size, (i % board_size[0])
 object_points, image_points1, image_points2 = [], [], []
 
 stereocalib_criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, 500, 0.00000000001)
-stereocalib_flags = cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_FIX_FOCAL_LENGTH
-
-def initDistortionMap(image):
-    distortion_length = image.distortion_width * image.distortion_height
-    xmap = np.zeros(distortion_length // 2, dtype=np.float32)
-    ymap = np.zeros(distortion_length // 2, dtype=np.float32)
-
-    for i in range(0, distortion_length, 2):
-        xmap[distortion_length // 2 - i // 2 - 1] = image.distortion[i] * DESTINATION_WIDTH
-        ymap[distortion_length // 2 - i // 2 - 1] = image.distortion[i + 1] * DESTINATION_HEIGHT
-    xmap = np.reshape(xmap, (image.distortion_height, image.distortion_width // 2))
-    ymap = np.reshape(ymap, (image.distortion_height, image.distortion_width // 2))
-
-    #resize the distortion map to equal desired destination image size
-    expanded_xmap = cv2.resize(xmap, (DESTINATION_WIDTH, DESTINATION_HEIGHT), 0, 0, cv2.INTER_CUBIC)
-    expanded_ymap = cv2.resize(ymap, (DESTINATION_WIDTH, DESTINATION_HEIGHT), 0, 0, cv2.INTER_CUBIC)
-    return expanded_xmap, expanded_ymap
-
-def get_image_as_array(image):
-    #wrap image data in numpy array
-    i_address = int(image.data_pointer)
-    ctype_array_def = ctypes.c_ubyte * image.height * image.width
-    # as ctypes array
-    as_ctype_array = ctype_array_def.from_address(i_address)
-    # as numpy array
-    as_numpy_array = np.ctypeslib.as_array(as_ctype_array)
-    return np.reshape(as_numpy_array, (image.height, image.width))
-
-def interpolate(img, xmap, ymap):
-    return cv2.remap(img, xmap, ymap, interpolation=cv2.INTER_CUBIC, borderMode=cv2.BORDER_CONSTANT)
+stereocalib_flags = cv2.CALIB_USE_INTRINSIC_GUESS | cv2.CALIB_SAME_FOCAL_LENGTH
 
 def process(controller):
     map_initialized = False
@@ -58,11 +30,11 @@ def process(controller):
         images = frame.images
         if images[0].is_valid and images[1].is_valid:
             if not map_initialized:
-                left_x_map, left_y_map = initDistortionMap(frame.images[0])
-                right_x_map, right_y_map = initDistortionMap(frame.images[1])
+                left_x_map, left_y_map = init_distortion_map(frame.images[0])
+                right_x_map, right_y_map = init_distortion_map(frame.images[1])
                 map_initialized = True
-            undistorted_left = interpolate(get_image_as_array(images[0]), left_x_map, left_y_map)
-            undistorted_right = interpolate(get_image_as_array(images[1]), left_x_map, left_y_map)
+            undistorted_left = undistort(convert_image_format(images[0]), left_x_map, left_y_map)
+            undistorted_right = undistort(convert_image_format(images[1]), left_x_map, left_y_map)
             left_bw = cv2.adaptiveThreshold(undistorted_left, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 13, 3)
             right_bw = cv2.adaptiveThreshold(undistorted_right, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 13, 3)
             corners_left = cv2.findChessboardCorners(left_bw, board_size, flags=cv2.CALIB_CB_FILTER_QUADS)
@@ -98,7 +70,7 @@ def process(controller):
 
     print("reprojection matrix")
     a = cv2.stereoRectify(C1, D1, C2, D2, (640, 240), R, T)
-    print(a[-3])
+    print(a)
 
 def main():
     controller = Leap.Controller()
