@@ -23,19 +23,20 @@ w.addItem(g)
 
 destination = np.empty((DESTINATION_HEIGHT, DESTINATION_WIDTH), dtype=np.ubyte)
 
-stereo_matcher = cv2.StereoBM_create(numDisparities=16*5, blockSize=7)
+stereo_matcher = cv2.StereoBM_create(numDisparities=80, blockSize=13)
+stereo_matcher.setSmallerBlockSize(3)
 stereo_matcher.setMinDisparity(-80)
 stereo_matcher.setUniquenessRatio(15)
 stereo_matcher.setPreFilterType(cv2.STEREO_BM_PREFILTER_NORMALIZED_RESPONSE)
-stereo_matcher.setPreFilterSize(5)
+stereo_matcher.setPreFilterSize(31)
 stereo_matcher.setPreFilterCap(50)
-
-stereo_matcher.setSpeckleWindowSize(30)
-stereo_matcher.setSpeckleRange(10)
+stereo_matcher.setTextureThreshold(8)
+stereo_matcher.setSpeckleWindowSize(5)
+stereo_matcher.setSpeckleRange(2)
 
 wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereo_matcher)
-wls_filter.setLambda(20000)
-wls_filter.setSigmaColor(1.6)
+wls_filter.setLambda(8000)
+wls_filter.setSigmaColor(1.2)
 right_matcher = cv2.ximgproc.createRightMatcher(stereo_matcher)
 
 right_rectification_map = cv2.initUndistortRectifyMap(C2, D2, R2, P2, (DESTINATION_HEIGHT, DESTINATION_WIDTH), cv2.CV_16SC2)
@@ -66,8 +67,9 @@ def process():
             filteredDisparity = wls_filter.filter(dispL, undistorted_left, None, dispR)
             reprojected_image = cv2.reprojectImageTo3D(filteredDisparity, Q, handleMissingValues=True)
             points = reprojected_image.reshape(640*240, 3)
-            points = points[points[:,2] < 0]
-            points = points[points[:,2] > -120]
+            points = points[points[:,2] < 5]
+            points = points[points[:,2] > -58]
+            points = points[points[:,0] < 7]
             scatterplot_items.setData(pos=points)
             cv2.imshow('dummy', undistorted_left)
         if cv2.waitKey(1) & 0xFF == ord('d'):
