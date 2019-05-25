@@ -9,6 +9,7 @@ def main():
     config = controller.config
     config.set("Gesture.Circle.MinRadius", 100.0)
     config.set("Gesture.Circle.MinArc", 30 * Leap.PI)
+
     pointer = Pointer()
     click_listener = ClickListener()
     grab_listener = GrabListener()
