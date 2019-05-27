@@ -24,6 +24,7 @@ def main():
 
     print("Press Enter to exit..")
     sys.stdin.readline()
+
     controller.remove_listener(pointer)
     controller.remove_listener(click_listener)
     controller.remove_listener(grab_listener)

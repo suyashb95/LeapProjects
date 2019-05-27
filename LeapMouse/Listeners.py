@@ -1,34 +1,17 @@
-'''
-* The coordinates of the palm are used to move the mouse pointer around.
-* A pinch between any finger and the thumb simulates a click.
-* If the ring finger and pinky are not extended (Like the German three hand gesture), the script enters scrolling mode and tilting the palm scrolls up and down. Moving the palm front and back zooms into and out of the screen.
-* Make a fist with the palm pointing left to grab the active window and move it around the screen.
-* Moving the hand in a circle of radius > 50 mm in clockwise/anticlockwise direction increases/decreases the master volume.
-'''
-
-
 import sys
 import Leap
 from Leap import CircleGesture
 import win32api, win32con, win32gui, comtypes
 from VolumeTest import endpoint, IID_IAudioEndpointVolume, enumerator
+from constants import *
 
 class ClickListener(Leap.Listener):
+    '''
+    listens for a pinch b/w the index and thumb of the right hand
+    to register a click
+    '''
+
     def on_init(self, controller):
-        self.num_monitors = win32api.GetSystemMetrics(80)
-        self.sensitivity = 2.5
-        self.screen_resolution = (
-            win32api.GetSystemMetrics(59),
-            win32api.GetSystemMetrics(60)
-        )
-        self.center  = {
-            'x':self.screen_resolution[0]/2,
-            'y':self.screen_resolution[1]/2
-        }
-        self.scale_factor = {
-            'x':self.screen_resolution[0]/400,
-            'y':self.screen_resolution[1]/350
-        }
         self.clicked = 0
 
     def on_frame(self, controller):
@@ -38,8 +21,8 @@ class ClickListener(Leap.Listener):
             right_hand = right_hand[0]
             if right_hand.grab_strength < 0.93:
                 right_hand_pos = right_hand.stabilized_palm_position
-                x = int(self.sensitivity*self.scale_factor['x']*right_hand_pos.x) + self.center['x']
-                y = -int(self.sensitivity*self.scale_factor['y']*(right_hand_pos.y - 225)) + self.center['y']
+                x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
+                y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
                 if right_hand.pinch_strength > 0.97 and self.clicked == 0:
                     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
                     self.clicked = 1
@@ -48,21 +31,10 @@ class ClickListener(Leap.Listener):
                     self.clicked = 0
 
 class Pointer(Leap.Listener):
-    def on_init(self, controller):
-        self.num_monitors = win32api.GetSystemMetrics(80)
-        self.screen_resolution = (
-            win32api.GetSystemMetrics(59),
-            win32api.GetSystemMetrics(60)
-        )
-        self.center  = {
-            'x':self.screen_resolution[0]/2,
-            'y':self.screen_resolution[1]/2
-        }
-        self.scale_factor = {
-            'x':self.screen_resolution[0]/400,
-            'y':self.screen_resolution[1]/350
-        }
-        self.sensitivity = 2.5
+    '''
+    uses the stabilized palm position of
+    the right hand to move the mouse pointer
+    '''
 
     def on_frame(self, controller):
         frame = controller.frame()
@@ -71,26 +43,15 @@ class Pointer(Leap.Listener):
             right_hand = right_hand[0]
             if right_hand.translation_probability > 0.5:
                 right_hand_pos = right_hand.stabilized_palm_position
-                x = int(self.sensitivity*self.scale_factor['x']*right_hand_pos.x) + self.center['x']
-                y = -int(self.sensitivity*self.scale_factor['y']*(right_hand_pos.y - 225)) + self.center['y']
+                x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
+                y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
                 win32api.SetCursorPos((x,y))
 
 class GrabListener(Leap.Listener):
-    def on_init(self, controller):
-        self.num_monitors = win32api.GetSystemMetrics(80)
-        self.screen_resolution = (
-            win32api.GetSystemMetrics(59),
-            win32api.GetSystemMetrics(60)
-        )
-        self.center  = {
-            'x':self.screen_resolution[0]/2,
-            'y':self.screen_resolution[1]/2
-        }
-        self.scale_factor = {
-            'x':self.screen_resolution[0]/400,
-            'y':self.screen_resolution[1]/350
-        }
-        self.sensitivity = 2.5
+    '''
+    detects when the right hand is curled into a fist
+    and angled a bit to register a window grab action
+    '''
 
     def on_frame(self, controller):
         frame = controller.frame()
@@ -99,8 +60,8 @@ class GrabListener(Leap.Listener):
             right_hand = right_hand[0]
             if right_hand.grab_strength > 0.93 and right_hand.palm_normal.x < -0.6:
                 right_hand_pos = right_hand.stabilized_palm_position
-                x = int(self.sensitivity*self.scale_factor['x']*right_hand_pos.x) + self.center['x']
-                y = -int(self.sensitivity*self.scale_factor['y']*(right_hand_pos.y - 225)) + self.center['y']
+                x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
+                y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
                 win_handle = win32gui.GetForegroundWindow()
                 win_size = win32gui.GetWindowRect(win_handle)
                 win32gui.SetWindowPos(
@@ -113,21 +74,11 @@ class GrabListener(Leap.Listener):
                 )
 
 class ScrollListener(Leap.Listener):
-    def on_init(self, controller):
-        self.num_monitors = win32api.GetSystemMetrics(80)
-        self.screen_resolution = (
-            win32api.GetSystemMetrics(59),
-            win32api.GetSystemMetrics(60)
-        )
-        self.center  = {
-            'x':self.screen_resolution[0]/2,
-            'y':self.screen_resolution[1]/2
-        }
-        self.scale_factor = {
-            'x':self.screen_resolution[0]/400,
-            'y':self.screen_resolution[1]/350
-        }
-        self.sensitivity = 2.5
+    '''
+    detects when the right hand has the thumb, index and
+    mid fingers extended. In this position, tilting the hand
+    upwards/downwards scrolls the window
+    '''
 
     def on_frame(self, controller):
         frame = controller.frame()
@@ -154,20 +105,10 @@ class ScrollListener(Leap.Listener):
                             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, -10, 0)
 
 class VolumeControl(Leap.Listener):
-    def on_init(self, controller):
-        self.num_monitors = win32api.GetSystemMetrics(80)
-        self.screen_resolution = (
-            win32api.GetSystemMetrics(59),
-            win32api.GetSystemMetrics(60)
-        )
-        self.center  = {
-            'x':self.screen_resolution[0]/2,
-            'y':self.screen_resolution[1]/2
-        }
-        self.scale_factor = {
-            'x':self.screen_resolution[0]/400,
-            'y':self.screen_resolution[1]/350
-        }
+    '''
+    moving the right hand in a circle > 50mm
+    changes the volume
+    '''
 
     def on_connect(self, controller):
         controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
