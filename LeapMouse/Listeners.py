@@ -13,22 +13,22 @@ class ClickListener(Leap.Listener):
 
     def on_init(self, controller):
         self.clicked = 0
+        self.PINCH_STRENGTH_THRESHOLD = 0.98
 
     def on_frame(self, controller):
         frame = controller.frame()
         right_hand = list(filter(lambda x: x.is_right, frame.hands))
         if right_hand:
             right_hand = right_hand[0]
-            if right_hand.grab_strength < 0.93:
-                right_hand_pos = right_hand.stabilized_palm_position
-                x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
-                y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
-                if right_hand.pinch_strength > 0.97 and self.clicked == 0:
-                    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
-                    self.clicked = 1
-                if right_hand.pinch_strength <= 0.95 and self.clicked == 1:
-                    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
-                    self.clicked = 0
+            right_hand_pos = right_hand.stabilized_palm_position
+            x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
+            y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
+            if right_hand.pinch_strength >  self.PINCH_STRENGTH_THRESHOLD and self.clicked == 0:
+                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
+                self.clicked = 1
+            if right_hand.pinch_strength < self.PINCH_STRENGTH_THRESHOLD and self.clicked == 1:
+                win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, x, y, 0, 0)
+                self.clicked = 0
 
 class Pointer(Leap.Listener):
     '''
@@ -36,12 +36,15 @@ class Pointer(Leap.Listener):
     the right hand to move the mouse pointer
     '''
 
+    def on_init(self, controller):
+        self.TRANSLATION_PROBABILITY_THRESHOLD = 0.5
+
     def on_frame(self, controller):
         frame = controller.frame()
         right_hand = list(filter(lambda x: x.is_right, frame.hands))
         if right_hand:
             right_hand = right_hand[0]
-            if right_hand.translation_probability > 0.5:
+            if right_hand.translation_probability > self.TRANSLATION_PROBABILITY_THRESHOLD:
                 right_hand_pos = right_hand.stabilized_palm_position
                 x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
                 y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
@@ -53,12 +56,16 @@ class GrabListener(Leap.Listener):
     and angled a bit to register a window grab action
     '''
 
+    def on_init(self, controller):
+        self.GRAB_STRENGTH_THRESHOLD = 0.93
+        self.ANGLE_THRESHOLD = -0.6
+
     def on_frame(self, controller):
         frame = controller.frame()
         right_hand = list(filter(lambda x: x.is_right, frame.hands))
         if right_hand:
             right_hand = right_hand[0]
-            if right_hand.grab_strength > 0.93 and right_hand.palm_normal.x < -0.6:
+            if right_hand.grab_strength > self.GRAB_STRENGTH_THRESHOLD and right_hand.palm_normal.x < self.ANGLE_THRESHOLD:
                 right_hand_pos = right_hand.stabilized_palm_position
                 x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
                 y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
@@ -80,6 +87,10 @@ class ScrollListener(Leap.Listener):
     upwards/downwards scrolls the window
     '''
 
+    def on_init(self, controller):
+        self.SCROLL_UP_TRESHOLD = 0.175
+        self.SCROLL_DOWN_THRESHOLD = -0.2
+
     def on_frame(self, controller):
         frame = controller.frame()
         right_hand = list(filter(lambda x: x.is_right, frame.hands))
@@ -99,9 +110,9 @@ class ScrollListener(Leap.Listener):
                         hand_pos = right_hand.palm_position
                         pitch = hand_dir.pitch
                         x, y = win32api.GetCursorPos()
-                        if pitch > 0.175:
+                        if pitch > self.SCROLL_UP_TRESHOLD:
                             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, 10, 0)
-                        if pitch < -0.2:
+                        if pitch < self.SCROLL_DOWN_THRESHOLD:
                             win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, x, y, -10, 0)
 
 class VolumeControl(Leap.Listener):
@@ -110,6 +121,10 @@ class VolumeControl(Leap.Listener):
     changes the volume
     '''
 
+    def on_init(self, controller):
+        self.RADIUS_THRESHOLD = 50
+        self.VELOCITY_THRESHOLD = 700
+
     def on_connect(self, controller):
         controller.enable_gesture(Leap.Gesture.TYPE_CIRCLE)
 
@@ -117,17 +132,16 @@ class VolumeControl(Leap.Listener):
         for gesture in controller.frame().gestures():
             if gesture.type == Leap.Gesture.TYPE_CIRCLE:
                 circle = Leap.CircleGesture(gesture)
-                if circle.radius > 50:
+                if circle.radius > self.RADIUS_THRESHOLD and circle.pointable.tip_velocity >  self.VELOCITY_THRESHOLD:
                     self.set_volume(circle)
 
     def set_volume(self, circle):
         endpoint = enumerator.GetDefaultAudioEndpoint(0,1)
         volume = endpoint.Activate(IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None )
-        if circle.radius >= 50 and circle.pointable.tip_velocity > 700:
-            level = volume.GetMasterVolumeLevel()
-            if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
-                if level + 0.1 < 0:
-                    volume.SetMasterVolumeLevel(level + 0.1, None)
-            else:
-                if level - 0.1 > -64:
-                    volume.SetMasterVolumeLevel(level - 0.1, None)
+        level = volume.GetMasterVolumeLevel()
+        if (circle.pointable.direction.angle_to(circle.normal) <= Leap.PI/2):
+            if level + 0.1 < 0:
+                volume.SetMasterVolumeLevel(level + 0.1, None)
+        else:
+            if level - 0.1 > -64:
+                volume.SetMasterVolumeLevel(level - 0.1, None)
