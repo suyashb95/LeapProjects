@@ -54,7 +54,10 @@ def process():
     scatterplot_items = gl.GLScatterPlotItem(pos=np.empty([3, 3]), color=(1,1,1,.3), size=0.05, pxMode=False)
     scatterplot_items.rotate(180, 1, 0, 0)
     w.addItem(scatterplot_items)
-
+    image_count = 0
+    points = None
+    concatenated_points = None
+    store_flag = False
     while True:
         frame = controller.frame()
         images = frame.images
@@ -67,18 +70,24 @@ def process():
             filteredDisparity = wls_filter.filter(dispL, undistorted_left, None, dispR)
             reprojected_image = cv2.reprojectImageTo3D(filteredDisparity, Q, handleMissingValues=True)
             points = reprojected_image.reshape(640*240, 3)
-            points = points[points[:,2] < 5]
-            points = points[points[:,2] > -58]
+            points = points[points[:,2] < 100]
+            points = points[points[:,2] > -10]
             points = points[points[:,0] < 7]
-            scatterplot_items.setData(pos=points)
+            concatenated_points = points if concatenated_points is None else np.vstack((concatenated_points, points))
+            image_count += 1
+            scatterplot_items.setData(pos=concatenated_points)
+            if image_count == 3:
+                if store_flag:
+                    point_cloud = pcl.PointCloud()
+                    point_cloud.from_array(concatenated_points)
+                    pcl.save(point_cloud, 'point_cloud.pcd', format='pcd')
+                    print('saved point cloud')
+                image_count = 0
+                concatenated_points = None
+                store_flag = False
             cv2.imshow('dummy', undistorted_left)
-        if cv2.waitKey(1) & 0xFF == ord('d'):
-            print("here")
-            point_cloud = pcl.PointCloud()
-            point_cloud.from_array(points)
-            print(point_cloud)
-            pcl.save(point_cloud, 'point_cloud.pcd', format='pcd')
-            break
+        if cv2.waitKey(1) & 0xFF == ord('l'):
+            store_flag = True
 
 def main():
     try:

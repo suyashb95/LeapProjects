@@ -40,5 +40,9 @@ Point cloud of my hand
 
 fingertip and palm coordinates from plot_fingers.py
 
+![img](https://i.imgur.com/SXojja9.png)
+
+a 3D scan of a coffee cup
+
 #### Contributing
 All contributions are welcome, especially for improving the camera calibration
