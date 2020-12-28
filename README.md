@@ -9,6 +9,11 @@ A collection of experiments with the Leap Motion Controller to use it as a gestu
 
 ### Usage
 #### LeapMouse
+
+Demo
+
+![img](https://thumbs.gfycat.com/TenseRashCirriped-small.gif)
+
 *  `cd` to the `LeapMouse` folder
 * run `python LeapMouse.py`
 * The coordinates of the palm are used to move the mouse pointer around
