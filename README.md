@@ -22,7 +22,7 @@ Demo
 * Make a fist with the palm pointing left to grab the active window and move it around the screen
 * Moving the hand in a circle of radius > 50 mm in clockwise/anticlockwise direction increases/decreases the master volume
 
-> Note:  LeapMouse.py works only with Windows and Python 2.7
+> Note:  LeapMouse.py works only with Windows
 
 ##### Dependencies
 * Pywin32 - Win32 API for Python
