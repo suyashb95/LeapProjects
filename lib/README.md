@@ -14,3 +14,6 @@
 * Go to C/C++ -> Preprocessor property page and add _CRT_SECURE_NO_WARNINGS to preprocessor definitions
 * You might have to include "stdafx.h" in LeapPython.cpp
 * Build project, and rename LeapPython.dll to LeapPython.pyd
+* Copy LeapPython.pyd, Leap.py and Leap.dll (Both from the Leap Orin 3.2.1 SDK) to the site-packages folder in Python
+
+https://support.leapmotion.com/hc/en-us/articles/360004362237-Generating-a-Python-3-3-0-Wrapper-with-SWIG-2-0-9

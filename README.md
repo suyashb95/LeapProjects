@@ -5,7 +5,7 @@ A collection of experiments with the Leap Motion Controller to use it as a gestu
 * Make sure you have the Leap SDK installed
 * run `pip install -r "requirements.txt"`
 * 3D-Scanning works with Python 3.6 but Leap Motion doesn't provide bindings for 3.6 so copy over the files from the `lib` folder to `site-packages`
-* You can also generate python bindings for any version of python using the instructions [here](https://support.leapmotion.com/hc/en-us/articles/223784048-Generating-a-Python-3-3-0-Wrapper-with-SWIG-2-0-9)
+* You can also generate python bindings for any version of python using the instructions [here](https://support.leapmotion.com/hc/en-us/articles/360004362237-Generating-a-Python-3-3-0-Wrapper-with-SWIG-2-0-9)
 
 ### Usage
 #### LeapMouse

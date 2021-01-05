@@ -5,15 +5,22 @@ import win32api, win32con, win32gui, comtypes
 from VolumeTest import endpoint, IID_IAudioEndpointVolume, enumerator
 from constants import *
 
+def map_to_screen_coordinates(x, y): 
+    new_x, new_y = (
+        int(scale_factor['x'] * x + center['x']),
+        -int(scale_factor['y'] * (y - 500) + center['y'])        
+    ) 
+    return (new_x, new_y)
+    
 class ClickListener(Leap.Listener):
     '''
     listens for a pinch b/w the index and thumb of the right hand
     to register a click
     '''
 
-    def on_init(self, controller):
-        self.clicked = 0
-        self.PINCH_STRENGTH_THRESHOLD = 0.98
+    def on_init(self, controlle
+        self.PINCH_STRENGTH_THRESHOr):
+        self.clicked = 0LD = 0.98
 
     def on_frame(self, controller):
         frame = controller.frame()
@@ -21,9 +28,9 @@ class ClickListener(Leap.Listener):
         if right_hand:
             right_hand = right_hand[0]
             right_hand_pos = right_hand.stabilized_palm_position
-            x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
-            y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
+            x, y = map_to_screen_coordinates(right_hand_pos.x, right_hand_pos.y)
             if right_hand.pinch_strength >  self.PINCH_STRENGTH_THRESHOLD and self.clicked == 0:
+                print("Clicked")
                 win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, x, y, 0, 0)
                 self.clicked = 1
             if right_hand.pinch_strength < self.PINCH_STRENGTH_THRESHOLD and self.clicked == 1:
@@ -44,11 +51,9 @@ class Pointer(Leap.Listener):
         right_hand = list(filter(lambda x: x.is_right, frame.hands))
         if right_hand:
             right_hand = right_hand[0]
-            if right_hand.translation_probability > self.TRANSLATION_PROBABILITY_THRESHOLD:
-                right_hand_pos = right_hand.stabilized_palm_position
-                x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
-                y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
-                win32api.SetCursorPos((x,y))
+            right_hand_pos = right_hand.stabilized_palm_position
+            x, y = map_to_screen_coordinates(right_hand_pos.x, right_hand_pos.y)
+            win32api.SetCursorPos((x,y))
 
 class GrabListener(Leap.Listener):
     '''
@@ -67,9 +72,8 @@ class GrabListener(Leap.Listener):
             right_hand = right_hand[0]
             if right_hand.grab_strength > self.GRAB_STRENGTH_THRESHOLD and right_hand.palm_normal.x < self.ANGLE_THRESHOLD:
                 right_hand_pos = right_hand.stabilized_palm_position
-                x = int(sensitivity*scale_factor['x']*right_hand_pos.x) + center['x']
-                y = -int(sensitivity*scale_factor['y']*(right_hand_pos.y - 225)) + center['y']
-                win_handle = win32gui.GetForegroundWindow()
+                x, y = map_to_screen_coordinates(right_hand_pos.x, right_hand_pos.y)
+                win_handle = win32gui.WindowFromPoint((x, y))
                 win_size = win32gui.GetWindowRect(win_handle)
                 win32gui.SetWindowPos(
                     win_handle,win32con.HWND_TOP,
@@ -77,7 +81,7 @@ class GrabListener(Leap.Listener):
                     y,
                     win_size[2]- win_size[0],
                     win_size[3] - win_size[1],
-                    win32con.SWP_NOSIZE
+                    win32con.SWP_NOSIZE | win32con.SWP_NOREDRAW
                 )
 
 class ScrollListener(Leap.Listener):
