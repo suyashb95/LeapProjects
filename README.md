@@ -12,7 +12,7 @@ A collection of experiments with the Leap Motion Controller to use it as a gestu
 
 Demo
 
-![img](https://thumbs.gfycat.com/TenseRashCirriped-small.gif)
+![img](./assets/leapmouse-demo.gif)
 
 *  `cd` to the `LeapMouse` folder
 * run `python LeapMouse.py`
